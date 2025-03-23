@@ -157,14 +157,13 @@ int main(void) {
         PROFILER_ZONE_END();
 
 
-        PROFILER_ZONE("voronoi the background");
-            draw_voronoi(target, points_pos, points_colors, NUM_POINTS);
-        PROFILER_ZONE_END();
-
         BeginDrawing();
         ClearBackground(RED);
 
-        DrawTexture(target.texture, 0, 0, WHITE);
+        PROFILER_ZONE("voronoi the background");
+            draw_voronoi(target, points_pos, points_colors, NUM_POINTS);
+            DrawTexture(target.texture, 0, 0, WHITE);
+        PROFILER_ZONE_END();
 
         for (size_t i = 0; i < NUM_POINTS; i++) {
             DrawCircleV(points_pos[i], 5, BLUE);
