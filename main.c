@@ -14,7 +14,7 @@
 
 // in pixels per second
 #define SPEED 100
-#define NUM_POINTS 50
+#define NUM_POINTS 10
 
 #define RESIZABLE
 
@@ -167,17 +167,15 @@ int main(void) {
         DrawTexture(target.texture, 0, 0, WHITE);
 
         for (size_t i = 0; i < NUM_POINTS; i++) {
-            DrawCircleV(points_pos[i], 5, BLACK);
+            DrawCircleV(points_pos[i], 5, BLUE);
         }
 
         DrawFPS(10, 10);
 
 #ifdef PROFILE_CODE
-
         PROFILER_ZONE("drawing profiler");
             draw_profiler();
         PROFILER_ZONE_END();
-
 #endif // PROFILE_CODE
 
         EndDrawing();
