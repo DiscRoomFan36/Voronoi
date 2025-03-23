@@ -4,6 +4,11 @@
 #include "raylib.h"
 #include "raymath.h"
 
+#define PROFILE_CODE
+#define PROFILER_IMPLEMENTATION
+#include "profiler.h"
+
+
 #define SPEED 5
 #define NUM_POINTS 10
 
@@ -69,54 +74,59 @@ int main(void) {
         height = GetScreenHeight();
 
 
-        // move points in a random walk
-        // TODO make better
-        for (size_t i = 0; i < NUM_POINTS; i++) {
-            Point *point = &points[i];
+        PROFILER_ZONE("walk points");
+            // move points in a random walk
+            // TODO make better
+            for (size_t i = 0; i < NUM_POINTS; i++) {
+                Point *point = &points[i];
 
-            point->x += point->vx;
-            point->y += point->vy;
+                point->x += point->vx;
+                point->y += point->vy;
 
-            if (point->x < 0)      point->vx *= -1;
-            if (point->x > width)  point->vx *= -1;
+                if (point->x < 0)      point->vx *= -1;
+                if (point->x > width)  point->vx *= -1;
 
-            if (point->y < 0)      point->vy *= -1;
-            if (point->y > height) point->vy *= -1;
-        }
+                if (point->y < 0)      point->vy *= -1;
+                if (point->y > height) point->vy *= -1;
+            }
+        PROFILER_ZONE_END();
 
 
         BeginDrawing();
         ClearBackground(RED);
 
-        // voronoi the background
-        for (int j = 0; j < height; j++) {
-            for (int i = 0; i < width; i++) {
 
-                // find the closest point
-                Point closest = points[0];
+        PROFILER_ZONE("voronoi the background");
+            // voronoi the background
+            for (int j = 0; j < height; j++) {
+                for (int i = 0; i < width; i++) {
+
+                    // find the closest point
+                    Point closest = points[0];
 #ifndef USE_INT
-                float d1 = dist_sqr((float) i, (float) j, closest.x, closest.y);
-                for (size_t k = 1; k < NUM_POINTS; k++) {
-                    float d2 = dist_sqr((float) i, (float) j, points[k].x, points[k].y);
-                    if (d2 < d1) {
-                        d1 = d2;
-                        closest = points[k];
+                    float d1 = dist_sqr((float) i, (float) j, closest.x, closest.y);
+                    for (size_t k = 1; k < NUM_POINTS; k++) {
+                        float d2 = dist_sqr((float) i, (float) j, points[k].x, points[k].y);
+                        if (d2 < d1) {
+                            d1 = d2;
+                            closest = points[k];
+                        }
                     }
-                }
 #else
-                int d1 = int_dist_sqr(i, j, closest.x, closest.y);
-                for (size_t k = 1; k < NUM_POINTS; k++) {
-                    int d2 = int_dist_sqr(i, j, points[k].x, points[k].y);
-                    if (d2 < d1) {
-                        d1 = d2;
-                        closest = points[k];
+                    int d1 = int_dist_sqr(i, j, closest.x, closest.y);
+                    for (size_t k = 1; k < NUM_POINTS; k++) {
+                        int d2 = int_dist_sqr(i, j, points[k].x, points[k].y);
+                        if (d2 < d1) {
+                            d1 = d2;
+                            closest = points[k];
+                        }
                     }
-                }
 #endif // USE_INT
 
-                DrawPixel(i, j, closest.color);
+                    DrawPixel(i, j, closest.color);
+                }
             }
-        }
+        PROFILER_ZONE_END();
 
         for (size_t i = 0; i < NUM_POINTS; i++) {
             DrawCircle(points[i].x, points[i].y, 5, BLACK);
@@ -124,10 +134,46 @@ int main(void) {
 
         DrawFPS(10, 10);
 
+#ifdef PROFILE_CODE
+
+        PROFILER_ZONE("collecting stats");
+
+            // TODO this is inefficient...
+            printf("Profiling:\n");
+            Profiler_Stats_Array stats = collect_stats();
+            Double_Array numbers = {0};
+
+            for (size_t i = 0; i < stats.count; i++) {
+                Profiler_Stats stat = stats.items[i];
+
+                numbers.count = 0;
+                for (size_t i = 0; i < stat.times.count; i++) {
+                    profiler_da_append(&numbers, stat.times.items[i]);
+                }
+
+                Numerical_Average_Bounds nab = get_numerical_average(numbers);
+
+                printf("    %-25s : %f +- %f\n", stat.title, nab.sample_mean, nab.standard_deviation);
+            }
+
+            for (size_t i = 0; i < stats.count; i++) {
+                profiler_da_free(&stats.items[i].times);
+            }
+            profiler_da_free(&stats);
+            profiler_da_free(&numbers);
+
+        PROFILER_ZONE_END();
+
+#endif // PROFILE_CODE
+
+        // PROFILER_PRINT();
+        // PROFILER_RESET();
+
         EndDrawing();
     }
 
     CloseWindow();
+    PROFILER_FREE();
 
     return 0;
 }

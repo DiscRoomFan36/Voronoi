@@ -1,6 +1,6 @@
 
 CC = clang
-CFLAGS = -Wall -Wextra -ggdb -pedantic
+CFLAGS = -Wall -Wextra -ggdb
 CFLAGS += -O2
 RAYLIB_FLAGS = -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 
