@@ -8,6 +8,8 @@
 #define PROFILER_IMPLEMENTATION
 #include "profiler.h"
 
+#include "voronoi.h"
+
 
 #define FONT_SIZE 20
 
@@ -79,18 +81,11 @@ float randf(void) {
     return (float) GetRandomValue(0, __INT_MAX__) / (float) __INT_MAX__;
 }
 
-float dist_sqr(float x1, float y1, float x2, float y2) {
-    float mag_sqr = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
-    return mag_sqr;
-}
-
 int main(void) {
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(width, height, "Voronoi");
 
-    size_t pixels_capacity = width * height;
-    Color *pixel_buffer = malloc(pixels_capacity * sizeof(Color));
-    float *depth_buffer = malloc(pixels_capacity * sizeof(float));
+    init_voronoi();
 
     assert(NUM_POINTS > 0);
     Vector2 points_pos[NUM_POINTS] = {0};
@@ -119,14 +114,9 @@ int main(void) {
         #ifdef RESIZABLE
             width  = GetScreenWidth();
             height = GetScreenHeight();
-
-            size_t new_capacity = width * height;
-            if (pixels_capacity < new_capacity) {
-                pixels_capacity = new_capacity;
-                pixel_buffer = realloc(pixel_buffer, pixels_capacity * sizeof(Color));
-                depth_buffer = realloc(depth_buffer, pixels_capacity * sizeof(float));
-            }
         #endif // RESIZABLE
+
+        assert(width > 0 && height > 0);
 
 
         { // keys
@@ -164,67 +154,20 @@ int main(void) {
 
         PROFILER_ZONE("voronoi the background");
 
-            // voronoi the background
             PROFILER_ZONE("Calculate pixel buffer");
-
-#if 0
-            { // initialize depth buffer
-                Vector2 fp = points_pos[0];
-                Color fc = points_colors[0];
-                for (int j = 0; j < height; j++) {
-                    for (int i = 0; i < width; i++) {
-                        depth_buffer[j * width + i] = dist_sqr(fp.x, fp.y, i, j);
-                    }
-                }
-                for (size_t i = 0; i < pixels_capacity; i++) pixel_buffer[i] = fc;
-            }
-
-            // use depth buffer
-            for (size_t k = 1; k < NUM_POINTS; k++) {
-                Vector2 pos = points_pos[k];
-                Color color = points_colors[k];
-
-                for (int j = 0; j < height; j++) {
-                    for (int i = 0; i < width; i++) {
-                        float d2 = dist_sqr(pos.x, pos.y, i, j);
-                        float d1 = depth_buffer[j * width + i];
-                        if (d2 < d1) {
-                            depth_buffer[j * width + i] = d2;
-                            pixel_buffer[j * width + i] = color;
-                        }
-                    }
-                }
-            }
-#else
-            for (int j = 0; j < height; j++) {
-                for (int i = 0; i < width; i++) {
-
-                    // find the closest point
-                    size_t close_index = 0;
-                    float d1 = dist_sqr(points_pos[0].x, points_pos[0].y, i, j);
-                    for (size_t k = 1; k < NUM_POINTS; k++) {
-                        float d2 = dist_sqr(points_pos[k].x, points_pos[k].y, i, j);
-                        if (d2 < d1) {
-                            d1 = d2;
-                            close_index = k;
-                        }
-                    }
-
-                    pixel_buffer[j * width + i] = points_colors[close_index];
-                }
-            }
-#endif
+            Color *pixels = draw_voronoi(width, height, points_pos, points_colors, NUM_POINTS);
             PROFILER_ZONE_END();
 
-
+            // TODO move into draw
             PROFILER_ZONE("draw pixel buffer");
             for (int j = 0; j < height; j++) {
                 int i = 0;
                 while (i < width) {
                     int low_i = i;
-                    Color this_color = pixel_buffer[j*width + i];
+                    Color this_color = pixels[j*width + i];
                     for (; i < width; i++) {
-                        if (!ColorIsEqual(this_color, pixel_buffer[j*width + i])) break;
+                        // if (!ColorIsEqual(this_color, pixel_buffer[j*width + i])) break;
+                        if (!ColorIsEqual(this_color, pixels[j*width + i])) break;
                     }
                     DrawRectangle(low_i, j, i - low_i, 1, this_color);
                 }
@@ -255,7 +198,8 @@ int main(void) {
 
     CloseWindow();
     PROFILER_FREE();
-    free(pixel_buffer);
+
+    finish_voronoi();
 
     return 0;
 }
