@@ -79,19 +79,10 @@ float randf(void) {
     return (float) GetRandomValue(0, __INT_MAX__) / (float) __INT_MAX__;
 }
 
-typedef struct Point {
-    float x, y;
-    float vx, vy;
-
-    Color color;
-} Point;
-
-
 float dist_sqr(float x1, float y1, float x2, float y2) {
     float mag_sqr = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
     return mag_sqr;
 }
-
 
 int main(void) {
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
