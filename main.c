@@ -15,8 +15,15 @@
 #define SPEED 100
 #define NUM_POINTS 10
 
-int width  = 1600;
-int height =  900;
+
+#ifdef RESIZEABLE
+    int width  = 1600;
+    int height =  900;
+#else
+    #define width  1600
+    #define height  900
+#endif // RESIZEABLE
+
 
 void draw_profiler(void) {
     // TODO this is inefficient...
@@ -106,14 +113,16 @@ int main(void) {
     while (!WindowShouldClose()) {
         PROFILER_ZONE("total frame time");
 
-        width  = GetScreenWidth();
-        height = GetScreenHeight();
-
-        size_t new_capacity = width * height * sizeof(Color);
-        if (pixels_capacity < new_capacity) {
-            pixels_capacity = new_capacity;
-            pixels = realloc(pixels, new_capacity);
-        }
+        #ifdef RESIZEABLE
+            width  = GetScreenWidth();
+            height = GetScreenHeight();
+            
+            size_t new_capacity = width * height * sizeof(Color);
+            if (pixels_capacity < new_capacity) {
+                pixels_capacity = new_capacity;
+                pixels = realloc(pixels, new_capacity);
+            }
+        #endif // RESIZEABLE
 
         float delta = GetFrameTime();
 
