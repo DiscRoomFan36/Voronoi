@@ -88,8 +88,6 @@ int main(void) {
     // SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(WIDTH, HEIGHT, "Voronoi");
 
-    SetTargetFPS(60);
-
     Color *pixels = malloc(WIDTH * HEIGHT * sizeof(Color));
 
     Point points[NUM_POINTS] = {0};
@@ -108,6 +106,8 @@ int main(void) {
     }
 
     while (!WindowShouldClose()) {
+        PROFILER_ZONE("total frame time");
+
         // WIDTH = GetScreenWidth();
         // HEIGHT = GetScreenHeight();
 
@@ -160,8 +160,15 @@ int main(void) {
 
             PROFILER_ZONE("draw background");
             for (int j = 0; j < HEIGHT; j++) {
-                for (int i = 0; i < WIDTH; i++) {
-                    DrawPixel(i, j, pixels[j * WIDTH + i]);
+                int i = 0;
+                while (i < WIDTH) {
+                    int low_i = i;
+                    Color this_color = pixels[j*WIDTH + i];
+                    for (; i < WIDTH; i++) {
+                        Color next_color = pixels[j*WIDTH + i];
+                        if (!ColorIsEqual(this_color, next_color)) break;
+                    }
+                    DrawRectangle(low_i, j, i - low_i, 1, this_color);
                 }
             }
             PROFILER_ZONE_END();
@@ -182,10 +189,10 @@ int main(void) {
 
 #endif // PROFILE_CODE
 
-        // PROFILER_PRINT();
-        // PROFILER_RESET();
-
         EndDrawing();
+
+        PROFILER_ZONE_END();
+        // if (profiler_zone_count() > 1028) PROFILER_RESET();
     }
 
     CloseWindow();

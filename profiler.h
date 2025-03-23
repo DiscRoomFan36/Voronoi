@@ -80,6 +80,9 @@ int profiler_equal(Profiler_Data a, Profiler_Data b);
 void profiler_zone(const char *title, const char *__file__, int __line__);
 void profiler_zone_end(void);
 
+// the number of zones currently in the zone array.
+size_t profiler_zone_count(void);
+
 void profiler_print(void);
 void profiler_reset(void);
 void profiler_free(void);
@@ -165,6 +168,10 @@ void profiler_zone_end(void) {
     }
 
     PROFILER_ASSERT(0 && "Unreachable: couldn't find a un-ended zone");
+}
+
+size_t profiler_zone_count(void) {
+    return __base_zones.count;
 }
 
 
