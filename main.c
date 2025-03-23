@@ -9,11 +9,70 @@
 #include "profiler.h"
 
 
+#define FONT_SIZE 20
+
 #define SPEED 5
 #define NUM_POINTS 10
 
 int width = 1600;
 int height = 900;
+
+void draw_profiler(void) {
+    // TODO this is inefficient...
+    Profiler_Stats_Array stats = collect_stats();
+    Double_Array numbers = {0};
+
+    int numbers_width = MeasureText(": 0.000000 +- 0.000000", FONT_SIZE);
+
+    int max_title_text_width = 0;
+    for (size_t i = 0; i < stats.count; i++) {
+        Profiler_Stats stat = stats.items[i];
+        int title_text_width = MeasureText(stat.title, FONT_SIZE);
+        if (max_title_text_width < title_text_width) {
+            max_title_text_width = title_text_width;
+        }
+    }
+
+    for (size_t i = 0; i < stats.count; i++) {
+        Profiler_Stats stat = stats.items[i];
+
+        numbers.count = 0;
+        for (size_t i = 0; i < stat.times.count; i++) {
+            profiler_da_append(&numbers, stat.times.items[i]);
+        }
+
+        Numerical_Average_Bounds nab = get_numerical_average(numbers);
+
+
+        const char *title_text = TextFormat("%-30s", stat.title, nab.sample_mean, nab.standard_deviation);
+        const char *numbers_text = TextFormat(": %.6f +- %.6f", nab.sample_mean, nab.standard_deviation);
+
+
+        DrawText(title_text,
+                width - numbers_width - 10 - max_title_text_width - 10,
+                10 + i*FONT_SIZE,
+                FONT_SIZE, WHITE);
+        DrawText(numbers_text,
+                width - numbers_width - 10,
+                10 + i*FONT_SIZE,
+                FONT_SIZE, WHITE);
+    }
+
+    for (size_t i = 0; i < stats.count; i++) {
+        profiler_da_free(&stats.items[i].times);
+    }
+    profiler_da_free(&stats);
+    profiler_da_free(&numbers);
+}
+
+
+
+
+
+
+
+
+
 
 #define USE_INT
 
@@ -136,32 +195,8 @@ int main(void) {
 
 #ifdef PROFILE_CODE
 
-        PROFILER_ZONE("collecting stats");
-
-            // TODO this is inefficient...
-            printf("Profiling:\n");
-            Profiler_Stats_Array stats = collect_stats();
-            Double_Array numbers = {0};
-
-            for (size_t i = 0; i < stats.count; i++) {
-                Profiler_Stats stat = stats.items[i];
-
-                numbers.count = 0;
-                for (size_t i = 0; i < stat.times.count; i++) {
-                    profiler_da_append(&numbers, stat.times.items[i]);
-                }
-
-                Numerical_Average_Bounds nab = get_numerical_average(numbers);
-
-                printf("    %-25s : %f +- %f\n", stat.title, nab.sample_mean, nab.standard_deviation);
-            }
-
-            for (size_t i = 0; i < stats.count; i++) {
-                profiler_da_free(&stats.items[i].times);
-            }
-            profiler_da_free(&stats);
-            profiler_da_free(&numbers);
-
+        PROFILER_ZONE("drawing profiler");
+            draw_profiler();
         PROFILER_ZONE_END();
 
 #endif // PROFILE_CODE
