@@ -119,11 +119,11 @@ int main(void) {
                 point->x += point->vx * delta;
                 point->y += point->vy * delta;
 
-                if (point->x < 0)      point->vx *= -1;
-                if (point->x > WIDTH)  point->vx *= -1;
+                if (point->x < 0)      point->vx =  fabs(point->vx);
+                if (point->x > WIDTH)  point->vx = -fabs(point->vx);
 
-                if (point->y < 0)      point->vy *= -1;
-                if (point->y > HEIGHT) point->vy *= -1;
+                if (point->y < 0)      point->vy =  fabs(point->vy);
+                if (point->y > HEIGHT) point->vy = -fabs(point->vy);
             }
         PROFILER_ZONE_END();
 
