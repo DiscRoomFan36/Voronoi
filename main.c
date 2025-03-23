@@ -102,18 +102,22 @@ int main(void) {
     float *depth_buffer = malloc(pixels_capacity * sizeof(float));
 
     assert(NUM_POINTS > 0);
-    Point points[NUM_POINTS] = {0};
+    Vector2 points_pos[NUM_POINTS] = {0};
+    Vector2 points_vel[NUM_POINTS] = {0};
+    Color points_colors[NUM_POINTS] = {0};
+
+
     for (size_t i = 0; i < NUM_POINTS; i++) {
-        points[i].x  = randf() * width;
-        points[i].y  = randf() * height;
+        points_pos[i].x  = randf() * width;
+        points_pos[i].y  = randf() * height;
 
-        points[i].vx = randf() * (SPEED-1) + 1;
-        points[i].vy = randf() * (SPEED-1) + 1;
+        points_vel[i].x = randf() * (SPEED-1) + 1;
+        points_vel[i].y = randf() * (SPEED-1) + 1;
 
-        if (GetRandomValue(0, 1)) points[i].vx *= -1;
-        if (GetRandomValue(0, 1)) points[i].vy *= -1;
+        if (GetRandomValue(0, 1)) points_vel[i].x *= -1;
+        if (GetRandomValue(0, 1)) points_vel[i].y *= -1;
 
-        points[i].color = ColorFromHSV(randf() * 360, 0.7, 0.7);
+        points_colors[i] = ColorFromHSV(randf() * 360, 0.7, 0.7);
     }
 
     bool paused = false;
@@ -148,16 +152,17 @@ int main(void) {
             // move points in a random walk
             // TODO make better
             for (size_t i = 0; i < NUM_POINTS; i++) {
-                Point *point = &points[i];
+                Vector2 *xy  = &points_pos[i];
+                Vector2 *vxy = &points_vel[i];
 
-                point->x += point->vx * delta;
-                point->y += point->vy * delta;
+                xy->x += vxy->x * delta;
+                xy->y += vxy->y * delta;
 
-                if (point->x < 0)      point->vx =  fabs(point->vx);
-                if (point->x > width)  point->vx = -fabs(point->vx);
+                if (xy->x < 0)      vxy->x =  fabs(vxy->x);
+                if (xy->x > width)  vxy->x = -fabs(vxy->x);
 
-                if (point->y < 0)      point->vy =  fabs(point->vy);
-                if (point->y > height) point->vy = -fabs(point->vy);
+                if (xy->y < 0)      vxy->y =  fabs(vxy->y);
+                if (xy->y > height) vxy->y = -fabs(vxy->y);
             }
         PROFILER_ZONE_END();
 
@@ -171,28 +176,30 @@ int main(void) {
             // voronoi the background
             PROFILER_ZONE("Calculate pixel buffer");
 
-#if 1
-            // initialize depth buffer
-            Point fp = points[0];
-            for (int j = 0; j < height; j++) {
-                for (int i = 0; i < width; i++) {
-                    depth_buffer[j * width + i] = dist_sqr(i, j, fp.x, fp.y);
-                    // pixel_buffer[j * width + i] = fp.color;
+#if 0
+            { // initialize depth buffer
+                Vector2 fp = points_pos[0];
+                Color fc = points_colors[0];
+                for (int j = 0; j < height; j++) {
+                    for (int i = 0; i < width; i++) {
+                        depth_buffer[j * width + i] = dist_sqr(fp.x, fp.y, i, j);
+                    }
                 }
+                for (size_t i = 0; i < pixels_capacity; i++) pixel_buffer[i] = fc;
             }
-            for (size_t i = 0; i < pixels_capacity; i++) pixel_buffer[i] = fp.color;
 
             // use depth buffer
             for (size_t k = 1; k < NUM_POINTS; k++) {
-                Point p = points[k];
+                Vector2 pos = points_pos[k];
+                Color color = points_colors[k];
 
                 for (int j = 0; j < height; j++) {
                     for (int i = 0; i < width; i++) {
-                        float d2 = dist_sqr(i, j, p.x, p.y);
+                        float d2 = dist_sqr(pos.x, pos.y, i, j);
                         float d1 = depth_buffer[j * width + i];
                         if (d2 < d1) {
                             depth_buffer[j * width + i] = d2;
-                            pixel_buffer[j * width + i] = p.color;
+                            pixel_buffer[j * width + i] = color;
                         }
                     }
                 }
@@ -202,17 +209,17 @@ int main(void) {
                 for (int i = 0; i < width; i++) {
 
                     // find the closest point
-                    Point closest = points[0];
-                    float d1 = dist_sqr(i, j, closest.x, closest.y);
-                    for (size_t k = 0; k < NUM_POINTS; k++) {
-                        float d2 = dist_sqr(i, j, points[k].x, points[k].y);
+                    size_t close_index = 0;
+                    float d1 = dist_sqr(points_pos[0].x, points_pos[0].y, i, j);
+                    for (size_t k = 1; k < NUM_POINTS; k++) {
+                        float d2 = dist_sqr(points_pos[k].x, points_pos[k].y, i, j);
                         if (d2 < d1) {
                             d1 = d2;
-                            closest = points[k];
+                            close_index = k;
                         }
                     }
 
-                    pixel_buffer[j * width + i] = closest.color;
+                    pixel_buffer[j * width + i] = points_colors[close_index];
                 }
             }
 #endif
@@ -236,7 +243,7 @@ int main(void) {
         PROFILER_ZONE_END();
 
         for (size_t i = 0; i < NUM_POINTS; i++) {
-            DrawCircle(points[i].x, points[i].y, 5, BLACK);
+            DrawCircleV(points_pos[i], 5, BLACK);
         }
 
         DrawFPS(10, 10);
