@@ -67,16 +67,12 @@ void draw_profiler(void) {
 
 
 typedef struct Point {
-    int x, y;
-    int vx, vy;
+    float x, y;
+    float vx, vy;
 
     Color color;
 } Point;
 
-
-int int_dist_sqr(int x1, int y1, int x2, int y2) {
-    return (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
-}
 
 float dist_sqr(float x1, float y1, float x2, float y2) {
     float mag_sqr = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
@@ -93,11 +89,11 @@ int main(void) {
     Point points[NUM_POINTS] = {0};
     for (size_t i = 0; i < NUM_POINTS; i++) {
 
-        points[i].x  = GetRandomValue(0, WIDTH );
-        points[i].y  = GetRandomValue(0, HEIGHT);
+        points[i].x  = (float) GetRandomValue(0, WIDTH );
+        points[i].y  = (float) GetRandomValue(0, HEIGHT);
 
-        points[i].vx = GetRandomValue(1, SPEED);
-        points[i].vy = GetRandomValue(1, SPEED);
+        points[i].vx = (float) GetRandomValue(1, SPEED);
+        points[i].vy = (float) GetRandomValue(1, SPEED);
 
         if (GetRandomValue(0, 1)) points[i].vx *= -1;
         if (GetRandomValue(0, 1)) points[i].vy *= -1;
@@ -142,10 +138,12 @@ int main(void) {
                 for (int i = 0; i < WIDTH; i++) {
 
                     // find the closest point
+                    assert(NUM_POINTS > 0);
+
                     Point closest = points[0];
-                    int d1 = int_dist_sqr(i, j, closest.x, closest.y);
-                    for (size_t k = 1; k < NUM_POINTS; k++) {
-                        int d2 = int_dist_sqr(i, j, points[k].x, points[k].y);
+                    float d1 = dist_sqr(i, j, closest.x, closest.y);
+                    for (size_t k = 0; k < NUM_POINTS; k++) {
+                        float d2 = dist_sqr(i, j, points[k].x, points[k].y);
                         if (d2 < d1) {
                             d1 = d2;
                             closest = points[k];
