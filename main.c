@@ -15,8 +15,8 @@
 #define SPEED 100
 #define NUM_POINTS 10
 
-#define WIDTH  1600
-#define HEIGHT  900
+int width  = 1600;
+int height =  900;
 
 void draw_profiler(void) {
     // TODO this is inefficient...
@@ -50,11 +50,11 @@ void draw_profiler(void) {
 
 
         DrawText(title_text,
-                WIDTH - numbers_width - 10 - max_title_text_width - 10,
+                width - numbers_width - 10 - max_title_text_width - 10,
                 10 + i*FONT_SIZE,
                 FONT_SIZE, WHITE);
         DrawText(numbers_text,
-                WIDTH - numbers_width - 10,
+                width - numbers_width - 10,
                 10 + i*FONT_SIZE,
                 FONT_SIZE, WHITE);
     }
@@ -82,16 +82,17 @@ float dist_sqr(float x1, float y1, float x2, float y2) {
 
 
 int main(void) {
-    // SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-    InitWindow(WIDTH, HEIGHT, "Voronoi");
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+    InitWindow(width, height, "Voronoi");
 
-    Color *pixels = malloc(WIDTH * HEIGHT * sizeof(Color));
+    size_t pixels_capacity = width * height * sizeof(Color);
+    Color *pixels = malloc(pixels_capacity);
 
     Point points[NUM_POINTS] = {0};
     for (size_t i = 0; i < NUM_POINTS; i++) {
 
-        points[i].x  = (float) GetRandomValue(0, WIDTH );
-        points[i].y  = (float) GetRandomValue(0, HEIGHT);
+        points[i].x  = (float) GetRandomValue(0, width );
+        points[i].y  = (float) GetRandomValue(0, height);
 
         points[i].vx = (float) GetRandomValue(1, SPEED);
         points[i].vy = (float) GetRandomValue(1, SPEED);
@@ -105,8 +106,15 @@ int main(void) {
     while (!WindowShouldClose()) {
         PROFILER_ZONE("total frame time");
 
-        // WIDTH = GetScreenWidth();
-        // HEIGHT = GetScreenHeight();
+        width  = GetScreenWidth();
+        height = GetScreenHeight();
+
+        size_t new_capacity = width * height * sizeof(Color);
+        if (pixels_capacity < new_capacity) {
+            pixels_capacity = new_capacity;
+            pixels = realloc(pixels, new_capacity);
+        }
+
         float delta = GetFrameTime();
 
 
@@ -120,10 +128,10 @@ int main(void) {
                 point->y += point->vy * delta;
 
                 if (point->x < 0)      point->vx =  fabs(point->vx);
-                if (point->x > WIDTH)  point->vx = -fabs(point->vx);
+                if (point->x > width)  point->vx = -fabs(point->vx);
 
                 if (point->y < 0)      point->vy =  fabs(point->vy);
-                if (point->y > HEIGHT) point->vy = -fabs(point->vy);
+                if (point->y > height) point->vy = -fabs(point->vy);
             }
         PROFILER_ZONE_END();
 
@@ -136,8 +144,8 @@ int main(void) {
 
             // voronoi the background
             PROFILER_ZONE("Calculate background");
-            for (int j = 0; j < HEIGHT; j++) {
-                for (int i = 0; i < WIDTH; i++) {
+            for (int j = 0; j < height; j++) {
+                for (int i = 0; i < width; i++) {
 
                     // find the closest point
                     assert(NUM_POINTS > 0);
@@ -152,21 +160,20 @@ int main(void) {
                         }
                     }
 
-                    pixels[j * WIDTH + i] = closest.color;
+                    pixels[j * width + i] = closest.color;
                 }
             }
             PROFILER_ZONE_END();
 
 
             PROFILER_ZONE("draw background");
-            for (int j = 0; j < HEIGHT; j++) {
+            for (int j = 0; j < height; j++) {
                 int i = 0;
-                while (i < WIDTH) {
+                while (i < width) {
                     int low_i = i;
-                    Color this_color = pixels[j*WIDTH + i];
-                    for (; i < WIDTH; i++) {
-                        Color next_color = pixels[j*WIDTH + i];
-                        if (!ColorIsEqual(this_color, next_color)) break;
+                    Color this_color = pixels[j*width + i];
+                    for (; i < width; i++) {
+                        if (!ColorIsEqual(this_color, pixels[j*width + i])) break;
                     }
                     DrawRectangle(low_i, j, i - low_i, 1, this_color);
                 }
