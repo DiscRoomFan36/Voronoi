@@ -108,12 +108,22 @@ int main(void) {
 
     bool paused = false;
 
+    RenderTexture2D target = LoadRenderTexture(width, height);
+
     while (!WindowShouldClose()) {
         PROFILER_ZONE("total frame time");
 
         #ifdef RESIZABLE
-            width  = GetScreenWidth();
-            height = GetScreenHeight();
+            int new_width  = GetScreenWidth();
+            int new_height = GetScreenHeight();
+
+            if (width != new_width || height != new_height) {
+                width  = new_width;
+                height = new_height;
+
+                UnloadRenderTexture(target);
+                target = LoadRenderTexture(width, height);
+            }
         #endif // RESIZABLE
 
         assert(width > 0 && height > 0);
@@ -159,7 +169,8 @@ int main(void) {
             PROFILER_ZONE_END();
 
             // TODO move into draw
-            PROFILER_ZONE("draw pixel buffer");
+            PROFILER_ZONE("draw into texture");
+            BeginTextureMode(target);
             for (int j = 0; j < height; j++) {
                 int i = 0;
                 while (i < width) {
@@ -172,7 +183,10 @@ int main(void) {
                     DrawRectangle(low_i, j, i - low_i, 1, this_color);
                 }
             }
+            EndTextureMode();
             PROFILER_ZONE_END();
+
+            DrawTexture(target.texture, 0, 0, WHITE);
 
         PROFILER_ZONE_END();
 
@@ -195,6 +209,8 @@ int main(void) {
         PROFILER_ZONE_END();
         // if (profiler_zone_count() > 1028) PROFILER_RESET();
     }
+
+    UnloadRenderTexture(target);
 
     CloseWindow();
     PROFILER_FREE();
