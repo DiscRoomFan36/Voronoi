@@ -4,6 +4,8 @@
 
 #include "voronoi.h"
 
+#include "profiler.h"
+
 static Color *pixel_buf = 0;
 static float *depth_buf = 0;
 static size_t buf_capacity = 0;
@@ -28,7 +30,8 @@ void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t
         depth_buf = malloc(buf_capacity * sizeof(float));
     }
 
-    #if 1
+    PROFILER_ZONE("Calculate pixel buffer");
+    #if 0
     { // initialize depth buffer
         Vector2 fp = points[0];
         Color fc = colors[0];
@@ -75,8 +78,12 @@ void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t
         }
     }
 #endif
+    PROFILER_ZONE_END();
 
+
+    PROFILER_ZONE("draw into texture");
     BeginTextureMode(target);
+
     for (size_t j = 0; j < height; j++) {
         size_t i = 0;
         while (i < width) {
@@ -85,10 +92,13 @@ void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t
             for (; i < width; i++) {
                 if (!ColorIsEqual(this_color, pixel_buf[j*width + i])) break;
             }
+
             DrawRectangle(low_i, j, i - low_i, 1, this_color);
         }
     }
+
     EndTextureMode();
+    PROFILER_ZONE_END();
 }
 
 

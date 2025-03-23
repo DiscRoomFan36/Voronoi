@@ -4,7 +4,6 @@
 #include "raylib.h"
 #include "raymath.h"
 
-#define PROFILE_CODE
 #define PROFILER_IMPLEMENTATION
 #include "profiler.h"
 
@@ -158,22 +157,14 @@ int main(void) {
         PROFILER_ZONE_END();
 
 
+        PROFILER_ZONE("voronoi the background");
+            draw_voronoi(target, points_pos, points_colors, NUM_POINTS);
+        PROFILER_ZONE_END();
+
         BeginDrawing();
         ClearBackground(RED);
 
-        PROFILER_ZONE("voronoi the background");
-
-            // PROFILER_ZONE("Calculate pixel buffer");
-            // PROFILER_ZONE_END();
-
-            // PROFILER_ZONE("draw into texture");
-            // PROFILER_ZONE_END();
-
-            draw_voronoi(target, points_pos, points_colors, NUM_POINTS);
-
-            DrawTexture(target.texture, 0, 0, WHITE);
-
-        PROFILER_ZONE_END();
+        DrawTexture(target.texture, 0, 0, WHITE);
 
         for (size_t i = 0; i < NUM_POINTS; i++) {
             DrawCircleV(points_pos[i], 5, BLACK);
