@@ -11,7 +11,8 @@
 
 #define FONT_SIZE 20
 
-#define SPEED 5
+// in pixels per second
+#define SPEED 100
 #define NUM_POINTS 10
 
 #define WIDTH  1600
@@ -106,6 +107,7 @@ int main(void) {
 
         // WIDTH = GetScreenWidth();
         // HEIGHT = GetScreenHeight();
+        float delta = GetFrameTime();
 
 
         PROFILER_ZONE("walk points");
@@ -114,8 +116,8 @@ int main(void) {
             for (size_t i = 0; i < NUM_POINTS; i++) {
                 Point *point = &points[i];
 
-                point->x += point->vx;
-                point->y += point->vy;
+                point->x += point->vx * delta;
+                point->y += point->vy * delta;
 
                 if (point->x < 0)      point->vx *= -1;
                 if (point->x > WIDTH)  point->vx *= -1;
