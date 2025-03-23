@@ -114,6 +114,8 @@ int main(void) {
         points[i].color = ColorFromHSV(randf() * 360, 0.7, 0.7);
     }
 
+    bool paused = false;
+
     while (!WindowShouldClose()) {
         PROFILER_ZONE("total frame time");
 
@@ -128,7 +130,14 @@ int main(void) {
             }
         #endif // RESIZABLE
 
+
+        { // keys
+            if (IsKeyPressed(KEY_SPACE)) paused = !paused;
+        }
+
+
         float delta = GetFrameTime();
+        if (paused) delta = 0;
 
 
         PROFILER_ZONE("walk points");
