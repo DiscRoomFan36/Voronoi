@@ -13,7 +13,7 @@
 
 // in pixels per second
 #define SPEED 100
-#define NUM_POINTS 25
+#define NUM_POINTS 50
 
 #define RESIZABLE
 
@@ -97,9 +97,11 @@ int main(void) {
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(width, height, "Voronoi");
 
-    size_t pixels_capacity = width * height * sizeof(Color);
-    Color *pixels = malloc(pixels_capacity);
+    size_t pixels_capacity = width * height;
+    Color *pixel_buffer = malloc(pixels_capacity * sizeof(Color));
+    float *depth_buffer = malloc(pixels_capacity * sizeof(float));
 
+    assert(NUM_POINTS > 0);
     Point points[NUM_POINTS] = {0};
     for (size_t i = 0; i < NUM_POINTS; i++) {
         points[i].x  = randf() * width;
@@ -123,20 +125,22 @@ int main(void) {
             width  = GetScreenWidth();
             height = GetScreenHeight();
 
-            size_t new_capacity = width * height * sizeof(Color);
+            size_t new_capacity = width * height;
             if (pixels_capacity < new_capacity) {
                 pixels_capacity = new_capacity;
-                pixels = realloc(pixels, new_capacity);
+                pixel_buffer = realloc(pixel_buffer, pixels_capacity * sizeof(Color));
+                depth_buffer = realloc(depth_buffer, pixels_capacity * sizeof(float));
             }
         #endif // RESIZABLE
 
 
         { // keys
-            if (IsKeyPressed(KEY_SPACE)) paused = !paused;
+            paused ^= IsKeyPressed(KEY_SPACE);
         }
 
 
         float delta = GetFrameTime();
+        if (delta > 0.25) delta = 0.25;
         if (paused) delta = 0;
 
 
@@ -166,12 +170,38 @@ int main(void) {
 
             // voronoi the background
             PROFILER_ZONE("Calculate pixel buffer");
+
+#if 1
+            // initialize depth buffer
+            Point fp = points[0];
+            for (int j = 0; j < height; j++) {
+                for (int i = 0; i < width; i++) {
+                    depth_buffer[j * width + i] = dist_sqr(i, j, fp.x, fp.y);
+                    // pixel_buffer[j * width + i] = fp.color;
+                }
+            }
+            for (size_t i = 0; i < pixels_capacity; i++) pixel_buffer[i] = fp.color;
+
+            // use depth buffer
+            for (size_t k = 1; k < NUM_POINTS; k++) {
+                Point p = points[k];
+
+                for (int j = 0; j < height; j++) {
+                    for (int i = 0; i < width; i++) {
+                        float d2 = dist_sqr(i, j, p.x, p.y);
+                        float d1 = depth_buffer[j * width + i];
+                        if (d2 < d1) {
+                            depth_buffer[j * width + i] = d2;
+                            pixel_buffer[j * width + i] = p.color;
+                        }
+                    }
+                }
+            }
+#else
             for (int j = 0; j < height; j++) {
                 for (int i = 0; i < width; i++) {
 
                     // find the closest point
-                    assert(NUM_POINTS > 0);
-
                     Point closest = points[0];
                     float d1 = dist_sqr(i, j, closest.x, closest.y);
                     for (size_t k = 0; k < NUM_POINTS; k++) {
@@ -182,9 +212,10 @@ int main(void) {
                         }
                     }
 
-                    pixels[j * width + i] = closest.color;
+                    pixel_buffer[j * width + i] = closest.color;
                 }
             }
+#endif
             PROFILER_ZONE_END();
 
 
@@ -193,9 +224,9 @@ int main(void) {
                 int i = 0;
                 while (i < width) {
                     int low_i = i;
-                    Color this_color = pixels[j*width + i];
+                    Color this_color = pixel_buffer[j*width + i];
                     for (; i < width; i++) {
-                        if (!ColorIsEqual(this_color, pixels[j*width + i])) break;
+                        if (!ColorIsEqual(this_color, pixel_buffer[j*width + i])) break;
                     }
                     DrawRectangle(low_i, j, i - low_i, 1, this_color);
                 }
@@ -226,7 +257,7 @@ int main(void) {
 
     CloseWindow();
     PROFILER_FREE();
-    free(pixels);
+    free(pixel_buffer);
 
     return 0;
 }
