@@ -14,8 +14,8 @@
 #define SPEED 5
 #define NUM_POINTS 10
 
-int width = 1600;
-int height = 900;
+#define WIDTH  1600
+#define HEIGHT  900
 
 void draw_profiler(void) {
     // TODO this is inefficient...
@@ -49,11 +49,11 @@ void draw_profiler(void) {
 
 
         DrawText(title_text,
-                width - numbers_width - 10 - max_title_text_width - 10,
+                WIDTH - numbers_width - 10 - max_title_text_width - 10,
                 10 + i*FONT_SIZE,
                 FONT_SIZE, WHITE);
         DrawText(numbers_text,
-                width - numbers_width - 10,
+                WIDTH - numbers_width - 10,
                 10 + i*FONT_SIZE,
                 FONT_SIZE, WHITE);
     }
@@ -66,24 +66,9 @@ void draw_profiler(void) {
 }
 
 
-
-
-
-
-
-
-
-
-#define USE_INT
-
 typedef struct Point {
-#ifndef USE_INT
-    float x, y;
-    float vx, vy;
-#else
     int x, y;
     int vx, vy;
-#endif // USE_INT
 
     Color color;
 } Point;
@@ -100,27 +85,21 @@ float dist_sqr(float x1, float y1, float x2, float y2) {
 
 
 int main(void) {
-    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-    InitWindow(width, height, "Voronoi");
+    // SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+    InitWindow(WIDTH, HEIGHT, "Voronoi");
 
     SetTargetFPS(60);
+
+    Color *pixels = malloc(WIDTH * HEIGHT * sizeof(Color));
 
     Point points[NUM_POINTS] = {0};
     for (size_t i = 0; i < NUM_POINTS; i++) {
 
-#ifndef USE_INT
-        points[i].x  = (float) GetRandomValue(0, width );
-        points[i].y  = (float) GetRandomValue(0, height);
-
-        points[i].vx = (float) GetRandomValue(1, SPEED);
-        points[i].vy = (float) GetRandomValue(1, SPEED);
-#else
-        points[i].x  = GetRandomValue(0, width );
-        points[i].y  = GetRandomValue(0, height);
+        points[i].x  = GetRandomValue(0, WIDTH );
+        points[i].y  = GetRandomValue(0, HEIGHT);
 
         points[i].vx = GetRandomValue(1, SPEED);
         points[i].vy = GetRandomValue(1, SPEED);
-#endif // USE_INT
 
         if (GetRandomValue(0, 1)) points[i].vx *= -1;
         if (GetRandomValue(0, 1)) points[i].vy *= -1;
@@ -129,8 +108,8 @@ int main(void) {
     }
 
     while (!WindowShouldClose()) {
-        width = GetScreenWidth();
-        height = GetScreenHeight();
+        // WIDTH = GetScreenWidth();
+        // HEIGHT = GetScreenHeight();
 
 
         PROFILER_ZONE("walk points");
@@ -143,10 +122,10 @@ int main(void) {
                 point->y += point->vy;
 
                 if (point->x < 0)      point->vx *= -1;
-                if (point->x > width)  point->vx *= -1;
+                if (point->x > WIDTH)  point->vx *= -1;
 
                 if (point->y < 0)      point->vy *= -1;
-                if (point->y > height) point->vy *= -1;
+                if (point->y > HEIGHT) point->vy *= -1;
             }
         PROFILER_ZONE_END();
 
@@ -156,22 +135,14 @@ int main(void) {
 
 
         PROFILER_ZONE("voronoi the background");
+
             // voronoi the background
-            for (int j = 0; j < height; j++) {
-                for (int i = 0; i < width; i++) {
+            PROFILER_ZONE("Calculate background");
+            for (int j = 0; j < HEIGHT; j++) {
+                for (int i = 0; i < WIDTH; i++) {
 
                     // find the closest point
                     Point closest = points[0];
-#ifndef USE_INT
-                    float d1 = dist_sqr((float) i, (float) j, closest.x, closest.y);
-                    for (size_t k = 1; k < NUM_POINTS; k++) {
-                        float d2 = dist_sqr((float) i, (float) j, points[k].x, points[k].y);
-                        if (d2 < d1) {
-                            d1 = d2;
-                            closest = points[k];
-                        }
-                    }
-#else
                     int d1 = int_dist_sqr(i, j, closest.x, closest.y);
                     for (size_t k = 1; k < NUM_POINTS; k++) {
                         int d2 = int_dist_sqr(i, j, points[k].x, points[k].y);
@@ -180,11 +151,21 @@ int main(void) {
                             closest = points[k];
                         }
                     }
-#endif // USE_INT
 
-                    DrawPixel(i, j, closest.color);
+                    pixels[j * WIDTH + i] = closest.color;
                 }
             }
+            PROFILER_ZONE_END();
+
+
+            PROFILER_ZONE("draw background");
+            for (int j = 0; j < HEIGHT; j++) {
+                for (int i = 0; i < WIDTH; i++) {
+                    DrawPixel(i, j, pixels[j * WIDTH + i]);
+                }
+            }
+            PROFILER_ZONE_END();
+
         PROFILER_ZONE_END();
 
         for (size_t i = 0; i < NUM_POINTS; i++) {
@@ -209,6 +190,7 @@ int main(void) {
 
     CloseWindow();
     PROFILER_FREE();
+    free(pixels);
 
     return 0;
 }
