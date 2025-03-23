@@ -13,7 +13,7 @@
 
 // in pixels per second
 #define SPEED 100
-#define NUM_POINTS 10
+#define NUM_POINTS 25
 
 #define RESIZABLE
 
@@ -75,6 +75,10 @@ void draw_profiler(void) {
 }
 
 
+float randf(void) {
+    return (float) GetRandomValue(0, __INT_MAX__) / (float) __INT_MAX__;
+}
+
 typedef struct Point {
     float x, y;
     float vx, vy;
@@ -98,17 +102,16 @@ int main(void) {
 
     Point points[NUM_POINTS] = {0};
     for (size_t i = 0; i < NUM_POINTS; i++) {
+        points[i].x  = randf() * width;
+        points[i].y  = randf() * height;
 
-        points[i].x  = (float) GetRandomValue(0, width );
-        points[i].y  = (float) GetRandomValue(0, height);
-
-        points[i].vx = (float) GetRandomValue(1, SPEED);
-        points[i].vy = (float) GetRandomValue(1, SPEED);
+        points[i].vx = randf() * (SPEED-1) + 1;
+        points[i].vy = randf() * (SPEED-1) + 1;
 
         if (GetRandomValue(0, 1)) points[i].vx *= -1;
         if (GetRandomValue(0, 1)) points[i].vy *= -1;
 
-        points[i].color = ColorFromHSV((float) GetRandomValue(0, 360), 0.7, 0.7);
+        points[i].color = ColorFromHSV(randf() * 360, 0.7, 0.7);
     }
 
     while (!WindowShouldClose()) {
