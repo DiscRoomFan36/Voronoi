@@ -17,12 +17,12 @@
 
 #define RESIZABLE
 
-#ifdef RESIZABLE
-    int width  = 1600;
-    int height =  900;
-#else
+#ifndef RESIZABLE
     #define width  1600
     #define height  900
+#else
+    int width  = 1600;
+    int height =  900;
 #endif // RESIZABLE
 
 
@@ -120,7 +120,7 @@ int main(void) {
         #ifdef RESIZABLE
             width  = GetScreenWidth();
             height = GetScreenHeight();
-            
+
             size_t new_capacity = width * height * sizeof(Color);
             if (pixels_capacity < new_capacity) {
                 pixels_capacity = new_capacity;
