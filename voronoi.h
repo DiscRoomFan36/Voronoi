@@ -8,7 +8,7 @@ typedef unsigned long size_t;
 
 void init_voronoi(void);
 
-Color *draw_voronoi(size_t width, size_t height, Vector2 *points, Color *colors, size_t num_points);
+void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t num_points);
 
 void finish_voronoi(void);
 

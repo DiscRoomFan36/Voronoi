@@ -16,7 +16,9 @@ float dist_sqr(float x1, float y1, float x2, float y2) {
     return (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
 }
 
-Color *draw_voronoi(size_t width, size_t height, Vector2 *points, Color *colors, size_t num_points) {
+void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t num_points) {
+    size_t width  = target.texture.width;
+    size_t height = target.texture.height;
 
     if (buf_capacity < width * height) {
         buf_capacity = width * height;
@@ -25,9 +27,6 @@ Color *draw_voronoi(size_t width, size_t height, Vector2 *points, Color *colors,
         pixel_buf = malloc(buf_capacity * sizeof(Color));
         depth_buf = malloc(buf_capacity * sizeof(float));
     }
-
-    // BeginTextureMode(target);
-    // (void) target;
 
     #if 1
     { // initialize depth buffer
@@ -77,7 +76,19 @@ Color *draw_voronoi(size_t width, size_t height, Vector2 *points, Color *colors,
     }
 #endif
 
-    return pixel_buf;
+    BeginTextureMode(target);
+    for (size_t j = 0; j < height; j++) {
+        size_t i = 0;
+        while (i < width) {
+            size_t low_i = i;
+            Color this_color = pixel_buf[j*width + i];
+            for (; i < width; i++) {
+                if (!ColorIsEqual(this_color, pixel_buf[j*width + i])) break;
+            }
+            DrawRectangle(low_i, j, i - low_i, 1, this_color);
+        }
+    }
+    EndTextureMode();
 }
 
 

@@ -161,30 +161,15 @@ int main(void) {
         BeginDrawing();
         ClearBackground(RED);
 
-
         PROFILER_ZONE("voronoi the background");
 
-            PROFILER_ZONE("Calculate pixel buffer");
-            Color *pixels = draw_voronoi(width, height, points_pos, points_colors, NUM_POINTS);
-            PROFILER_ZONE_END();
+            // PROFILER_ZONE("Calculate pixel buffer");
+            // PROFILER_ZONE_END();
 
-            // TODO move into draw
-            PROFILER_ZONE("draw into texture");
-            BeginTextureMode(target);
-            for (int j = 0; j < height; j++) {
-                int i = 0;
-                while (i < width) {
-                    int low_i = i;
-                    Color this_color = pixels[j*width + i];
-                    for (; i < width; i++) {
-                        // if (!ColorIsEqual(this_color, pixel_buffer[j*width + i])) break;
-                        if (!ColorIsEqual(this_color, pixels[j*width + i])) break;
-                    }
-                    DrawRectangle(low_i, j, i - low_i, 1, this_color);
-                }
-            }
-            EndTextureMode();
-            PROFILER_ZONE_END();
+            // PROFILER_ZONE("draw into texture");
+            // PROFILER_ZONE_END();
+
+            draw_voronoi(target, points_pos, points_colors, NUM_POINTS);
 
             DrawTexture(target.texture, 0, 0, WHITE);
 
