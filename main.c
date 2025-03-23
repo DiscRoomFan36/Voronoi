@@ -165,7 +165,7 @@ int main(void) {
         PROFILER_ZONE("voronoi the background");
 
             // voronoi the background
-            PROFILER_ZONE("Calculate background");
+            PROFILER_ZONE("Calculate pixel buffer");
             for (int j = 0; j < height; j++) {
                 for (int i = 0; i < width; i++) {
 
@@ -188,7 +188,7 @@ int main(void) {
             PROFILER_ZONE_END();
 
 
-            PROFILER_ZONE("draw background");
+            PROFILER_ZONE("draw pixel buffer");
             for (int j = 0; j < height; j++) {
                 int i = 0;
                 while (i < width) {
