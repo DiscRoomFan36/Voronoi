@@ -14,7 +14,7 @@
 
 // in pixels per second
 #define SPEED 100
-#define NUM_POINTS 10
+#define NUM_POINTS 50
 
 #define RESIZABLE
 
@@ -162,7 +162,10 @@ int main(void) {
 
         PROFILER_ZONE("voronoi the background");
             draw_voronoi(target, points_pos, points_colors, NUM_POINTS);
-            DrawTexture(target.texture, 0, 0, WHITE);
+
+            // remember to draw this flipped, because of how the GPU dose things...
+            Rectangle source = {0, 0, target.texture.width, -target.texture.height};
+            DrawTextureRec(target.texture, source, (Vector2){0, 0}, WHITE);
         PROFILER_ZONE_END();
 
         for (size_t i = 0; i < NUM_POINTS; i++) {

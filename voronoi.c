@@ -93,16 +93,9 @@ void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t
                 if (!ColorIsEqual(this_color, pixel_buf[j*width + i])) break;
             }
 
-            // draw it upsidedown for some reason?
-            // the texture is flipped when drawing
-            DrawRectangle(low_i, height - 1 - j, i - low_i, 1, this_color);
-            // DrawRectangle(low_i, j, i - low_i, 1, this_color);
+            DrawRectangle(low_i, j, i - low_i, 1, this_color);
         }
     }
-
-    // for (size_t i = 0; i < num_points; i++) {
-    //     DrawCircleV(points[i], 10, RED);
-    // }
 
     EndTextureMode();
     PROFILER_ZONE_END();
