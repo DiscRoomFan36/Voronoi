@@ -29,15 +29,24 @@
 #endif
 
 
-typedef clock_t time_unit;
+#if defined(__USE_POSIX199309) && defined(CLOCK_MONOTONIC)
+    #define USE_BETTER_CLOCK
+#endif
+
+#ifdef USE_BETTER_CLOCK
+    typedef struct timespec time_unit;
+#else
+    typedef clock_t time_unit;
+#endif
 
 typedef struct Profiler_Data {
     const char *title;
-    time_unit start_time;
-    time_unit end_time;
-
     const char *file; // these could be useful
     int         line; // these could be useful
+
+    time_unit start_time;
+    time_unit end_time;
+    int end_set;
 } Profiler_Data;
 
 typedef struct Profiler_Data_Array {
@@ -46,11 +55,11 @@ typedef struct Profiler_Data_Array {
     size_t capacity;
 } Profiler_Data_Array;
 
-typedef struct Time_Unit_Array {
-    time_unit *items;
+typedef struct Double_Array {
+    double *items;
     size_t count;
     size_t capacity;
-} Time_Unit_Array;
+} Double_Array;
 
 
 // collects like Profile data, useing file line and func
@@ -61,7 +70,7 @@ typedef struct Profiler_Stats {
     int         line;
     const char *func;
 
-    Time_Unit_Array times;
+    Double_Array times;
 } Profiler_Stats;
 
 typedef struct Profiler_Stats_Array {
@@ -72,16 +81,13 @@ typedef struct Profiler_Stats_Array {
 
 
 time_unit get_time(void);
-double time_units_to_secs(time_unit x);
+double elapsed_time_in_secs(time_unit start, time_unit end);
 
 
 int profiler_equal(Profiler_Data a, Profiler_Data b);
 
 void profiler_zone(const char *title, const char *__file__, int __line__);
 void profiler_zone_end(void);
-
-// the number of zones currently in the zone array.
-size_t profiler_zone_count(void);
 
 void profiler_print(void);
 void profiler_reset(void);
@@ -124,10 +130,26 @@ Profiler_Data_Array __base_zones = {0};
 
 
 time_unit get_time(void) {
+#ifdef USE_BETTER_CLOCK
+    time_unit item;
+    #ifndef CLOCK_MONOTONIC
+        #error "VSCode is dumb"
+        #define CLOCK_MONOTONIC 0
+    #endif
+    clock_gettime(CLOCK_MONOTONIC, &item);
+    return item;
+#else
     return clock();
+#endif
 }
-double time_units_to_secs(time_unit x) {
-    return (double) x / (double) CLOCKS_PER_SEC;
+double elapsed_time_in_secs(time_unit start, time_unit finish) {
+#ifdef USE_BETTER_CLOCK
+    double elapsed = (finish.tv_sec - start.tv_sec);
+    elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
+    return elapsed;
+#else
+    return (float) (finish - start) / (float) CLOCKS_PER_SEC;
+#endif
 }
 
 int profiler_equal(Profiler_Data a, Profiler_Data b) {
@@ -145,7 +167,8 @@ void profiler_zone(const char *title, const char *__file__, int __line__) {
     Profiler_Data data = {
         .title = title,
         .start_time = start,
-        .end_time = 0,
+        // .end_time = 0,
+        .end_set = 0,
 
         .file = __file__,
         .line = __line__,
@@ -161,17 +184,14 @@ void profiler_zone_end(void) {
         Profiler_Data *it = &__base_zones.items[i];
 
         // if its not zero, this zone has already been completed...
-        if (it->end_time != 0) continue;
+        if (it->end_set) continue;
 
         it->end_time = end;
+        it->end_set = 1;
         return;
     }
 
     PROFILER_ASSERT(0 && "Unreachable: couldn't find a un-ended zone");
-}
-
-size_t profiler_zone_count(void) {
-    return __base_zones.count;
 }
 
 
@@ -200,8 +220,8 @@ void profiler_print(void) {
     for (size_t i = 0; i < __base_zones.count; i++) {
         Profiler_Data it = __base_zones.items[i];
 
-        if (it.end_time == 0) continue;
-        float secs = time_units_to_secs(it.end_time - it.start_time);
+        if (!it.end_set) continue;
+        float secs = elapsed_time_in_secs(it.start_time, it.end_time);
 
         printf("|   ");
         printf("%-*s", max_word_length, it.title);
@@ -237,7 +257,7 @@ Profiler_Stats_Array collect_stats(void) {
     for (size_t i = 0; i < __base_zones.count; i++) {
         Profiler_Data it = __base_zones.items[i];
 
-        if (it.end_time == 0) continue;
+        if (!it.end_set) continue;
         // check weather this data is in the unique data array.
         int maybe_index = maybe_index_in_array(unique_data, it);
 
@@ -255,7 +275,7 @@ Profiler_Stats_Array collect_stats(void) {
         }
 
         Profiler_Stats *stats = &result.items[maybe_index];
-        time_unit time = it.end_time - it.start_time;
+        double time = elapsed_time_in_secs(it.start_time, it.end_time);
         profiler_da_append(&stats->times, time);
     }
 
@@ -273,11 +293,6 @@ typedef struct Numerical_Average_Bounds {
     double confidence_interval_lower;
 } Numerical_Average_Bounds;
 
-typedef struct Double_Array {
-    double *items;
-    size_t count;
-    size_t capacity;
-} Double_Array;
 
 
 #include <math.h>
@@ -285,19 +300,17 @@ typedef struct Double_Array {
 Numerical_Average_Bounds get_numerical_average(Double_Array numbers) {
     double sample_mean = 0;
     for (size_t i = 0; i < numbers.count; i++) {
-        double secs = time_units_to_secs(numbers.items[i]);
-
         // TODO? use https://en.wikipedia.org/wiki/Kahan_summation_algorithm
-        sample_mean += secs;
+        sample_mean += numbers.items[i];;
     }
     sample_mean /= numbers.count;
 
     double standard_deviation = 0;
     for (size_t i = 0; i < numbers.count; i++) {
-        double secs = time_units_to_secs(numbers.items[i]);
+        double it = numbers.items[i];
 
         // TODO? use https://en.wikipedia.org/wiki/Kahan_summation_algorithm
-        standard_deviation += (secs - sample_mean)*(secs - sample_mean);
+        standard_deviation += (it - sample_mean)*(it - sample_mean);
     }
     standard_deviation /= numbers.count;
 
