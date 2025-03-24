@@ -16,15 +16,8 @@
 #define SPEED 100
 #define NUM_POINTS 50
 
-#define RESIZABLE
-
-#ifndef RESIZABLE
-    #define width  1600
-    #define height  900
-#else
-    int width  = 1600;
-    int height =  900;
-#endif // RESIZABLE
+int screen_width  = 1600;
+int screen_height =  900;
 
 
 void draw_profiler(void) {
@@ -59,11 +52,11 @@ void draw_profiler(void) {
 
 
         DrawText(title_text,
-                width - numbers_width - 10 - max_title_text_width - 10,
+                screen_width - numbers_width - 10 - max_title_text_width - 10,
                 10 + i*FONT_SIZE,
                 FONT_SIZE, WHITE);
         DrawText(numbers_text,
-                width - numbers_width - 10,
+                screen_width - numbers_width - 10,
                 10 + i*FONT_SIZE,
                 FONT_SIZE, WHITE);
     }
@@ -82,7 +75,7 @@ float randf(void) {
 
 int main(void) {
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-    InitWindow(width, height, "Voronoi");
+    InitWindow(screen_width, screen_height, "Voronoi");
 
     init_voronoi();
 
@@ -93,8 +86,8 @@ int main(void) {
 
 
     for (size_t i = 0; i < NUM_POINTS; i++) {
-        points_pos[i].x  = randf() * width;
-        points_pos[i].y  = randf() * height;
+        points_pos[i].x  = randf() * screen_width;
+        points_pos[i].y  = randf() * screen_height;
 
         points_vel[i].x = randf() * (SPEED-1) + 1;
         points_vel[i].y = randf() * (SPEED-1) + 1;
@@ -107,25 +100,23 @@ int main(void) {
 
     bool paused = false;
 
-    RenderTexture2D target = LoadRenderTexture(width, height);
+    RenderTexture2D target = LoadRenderTexture(screen_width, screen_height);
 
     while (!WindowShouldClose()) {
         PROFILER_ZONE("total frame time");
 
-        #ifdef RESIZABLE
-            int new_width  = GetScreenWidth();
-            int new_height = GetScreenHeight();
+        int new_width  = GetScreenWidth();
+        int new_height = GetScreenHeight();
 
-            if (width != new_width || height != new_height) {
-                width  = new_width;
-                height = new_height;
+        if (screen_width != new_width || screen_height != new_height) {
+            screen_width  = new_width;
+            screen_height = new_height;
 
-                UnloadRenderTexture(target);
-                target = LoadRenderTexture(width, height);
-            }
-        #endif // RESIZABLE
+            UnloadRenderTexture(target);
+            target = LoadRenderTexture(screen_width, screen_height);
+        }
 
-        assert(width > 0 && height > 0);
+        assert(screen_width > 0 && screen_height > 0);
 
 
         { // keys
@@ -149,10 +140,10 @@ int main(void) {
                 xy->y += vxy->y * delta;
 
                 if (xy->x < 0)      vxy->x =  fabs(vxy->x);
-                if (xy->x > width)  vxy->x = -fabs(vxy->x);
+                if (xy->x > screen_width)  vxy->x = -fabs(vxy->x);
 
                 if (xy->y < 0)      vxy->y =  fabs(vxy->y);
-                if (xy->y > height) vxy->y = -fabs(vxy->y);
+                if (xy->y > screen_height) vxy->y = -fabs(vxy->y);
             }
         PROFILER_ZONE_END();
 
