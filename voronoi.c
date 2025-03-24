@@ -1,29 +1,30 @@
 
 #include <stdlib.h>
 #include <assert.h>
-
-// because VSCode is being stupid
-#ifndef __USE_XOPEN2K
-#define __USE_XOPEN2K
-#endif // __USE_XOPEN2K
-
-#include <pthread.h>
-
 #include <stdio.h>
 
 #include "voronoi.h"
 
 #include "profiler.h"
 
-
+static Color *pixel_buf = 0;
+static size_t buf_capacity = 0;
 
 float dist_sqr(float x1, float y1, float x2, float y2) {
     return (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
 }
 
+#define USE_THREADS
 
-static Color *pixel_buf = 0;
-static size_t buf_capacity = 0;
+#ifdef USE_THREADS
+
+// because VSCode is being stupid
+// we need this for barriers
+#ifndef __USE_XOPEN2K
+#define __USE_XOPEN2K
+#endif // __USE_XOPEN2K
+
+#include <pthread.h>
 
 #define NUM_THREADS 12
 
@@ -68,8 +69,6 @@ void *thread_function(void *args) {
 
             pthread_mutex_unlock(&counter_lock);
 
-            // Color thread_pixel_buf[THREAD_CHUNK_SIZE];
-            // do the work
             for (size_t i = work_to_do; i < work_to_do + THREAD_CHUNK_SIZE; i++) {
                 if (i >= thread_width * thread_height) break;
 
@@ -100,8 +99,12 @@ void *thread_function(void *args) {
     return NULL;
 }
 
+#endif // USE_THREADS
+
+
 void init_voronoi(void) {
 
+#ifdef USE_THREADS
     if (pthread_barrier_init(&start_barrier, NULL, NUM_THREADS+1)) {
         fprintf(stderr, "ERROR: cannot init start barrier\n");
         exit(1);
@@ -121,6 +124,8 @@ void init_voronoi(void) {
             exit(1);
         }
     }
+#endif // USE_THREADS
+
 }
 
 void finish_voronoi(void) {
@@ -129,10 +134,9 @@ void finish_voronoi(void) {
     pixel_buf = 0;
     buf_capacity = 0;
 
-
+#ifdef USE_THREADS
     finished = true;
     pthread_barrier_wait(&start_barrier);
-
 
     // finish the treads
     for (size_t i = 0; i < NUM_THREADS; i++) {
@@ -141,6 +145,10 @@ void finish_voronoi(void) {
             fprintf(stderr, "ERROR: on id %zu when closeing\n", i);
         }
     }
+
+    pthread_barrier_destroy(&start_barrier);
+    pthread_barrier_destroy(&end_barrier);
+#endif // USE_THREADS
 }
 
 
@@ -154,22 +162,22 @@ void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t
         pixel_buf = malloc(buf_capacity * sizeof(Color));
     }
 
+
     PROFILER_ZONE("Calculate pixel buffer");
 
-#if 1
-    { // use the threads
-        // setup
-        thread_width  = width;
-        thread_height = height;
-        thread_points = points;
-        thread_colors = colors;
-        thread_num_points = num_points;
-        counter = 0;
+#ifdef USE_THREADS
+    // setup
+    thread_width  = width;
+    thread_height = height;
+    thread_points = points;
+    thread_colors = colors;
+    thread_num_points = num_points;
+    counter = 0;
 
-        pthread_barrier_wait(&start_barrier);
-
-        pthread_barrier_wait(&end_barrier);
-    }
+    // start the waiting threads
+    pthread_barrier_wait(&start_barrier);
+    // wait for them to stop
+    pthread_barrier_wait(&end_barrier);
 
 #else
 
@@ -190,7 +198,8 @@ void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t
             pixel_buf[j * width + i] = colors[close_index];
         }
     }
-#endif
+
+#endif // USE_THREADS
 
     PROFILER_ZONE_END();
 
