@@ -154,9 +154,7 @@ int main(void) {
         PROFILER_ZONE("voronoi the background");
             draw_voronoi(target, points_pos, points_colors, NUM_POINTS);
 
-            // remember to draw this flipped, because of how the GPU dose things...
-            Rectangle source = {0, 0, target.texture.width, -target.texture.height};
-            DrawTextureRec(target.texture, source, (Vector2){0, 0}, WHITE);
+            DrawTexture(target.texture, 0, 0, WHITE);
         PROFILER_ZONE_END();
 
         for (size_t i = 0; i < NUM_POINTS; i++) {

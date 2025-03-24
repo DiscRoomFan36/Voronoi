@@ -208,6 +208,8 @@ void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t
     BeginTextureMode(target);
 
     for (size_t j = 0; j < height; j++) {
+        // find a band of the same color.
+        // this is MUCH faster than just useing DrawPixel()
         size_t i = 0;
         while (i < width) {
             size_t low_i = i;
@@ -216,7 +218,9 @@ void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t
                 if (!ColorIsEqual(this_color, pixel_buf[j*width + i])) break;
             }
 
-            DrawRectangle(low_i, j, i - low_i, 1, this_color);
+            // remember to draw this upsidedown.
+            // bc how textures work, and the API demands it.
+            DrawRectangle(low_i, height - 1 - j, i - low_i, 1, this_color);
         }
     }
 
