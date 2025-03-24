@@ -7,7 +7,6 @@
 #include "profiler.h"
 
 static Color *pixel_buf = 0;
-static float *depth_buf = 0;
 static size_t buf_capacity = 0;
 
 
@@ -25,41 +24,10 @@ void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t
     if (buf_capacity < width * height) {
         buf_capacity = width * height;
         free(pixel_buf);
-        free(depth_buf);
         pixel_buf = malloc(buf_capacity * sizeof(Color));
-        depth_buf = malloc(buf_capacity * sizeof(float));
     }
 
     PROFILER_ZONE("Calculate pixel buffer");
-    #if 0
-    { // initialize depth buffer
-        Vector2 fp = points[0];
-        Color fc = colors[0];
-        for (size_t j = 0; j < height; j++) {
-            for (size_t i = 0; i < width; i++) {
-                depth_buf[j * width + i] = dist_sqr(fp.x, fp.y, i, j);
-            }
-        }
-        for (size_t i = 0; i < buf_capacity; i++) pixel_buf[i] = fc;
-    }
-
-    // use depth buffer
-    for (size_t k = 1; k < num_points; k++) {
-        Vector2 pos = points[k];
-        Color color = colors[k];
-
-        for (size_t j = 0; j < height; j++) {
-            for (size_t i = 0; i < width; i++) {
-                float d2 = dist_sqr(pos.x, pos.y, i, j);
-                float d1 = depth_buf[j * width + i];
-                if (d2 < d1) {
-                    depth_buf[j * width + i] = d2;
-                    pixel_buf[j * width + i] = color;
-                }
-            }
-        }
-    }
-#else
     for (size_t j = 0; j < height; j++) {
         for (size_t i = 0; i < width; i++) {
 
@@ -77,7 +45,6 @@ void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t
             pixel_buf[j * width + i] = colors[close_index];
         }
     }
-#endif
     PROFILER_ZONE_END();
 
 
@@ -104,10 +71,8 @@ void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t
 
 void finish_voronoi(void) {
     if (pixel_buf) free(pixel_buf);
-    if (depth_buf) free(depth_buf);
 
     pixel_buf = 0;
-    depth_buf = 0;
     buf_capacity = 0;
 }
 
