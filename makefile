@@ -9,6 +9,8 @@ DEFINES += -DPROFILE_CODE
 RAYLIB_FLAGS = -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 
 
+# TODO make this cleaner with %.o: %.c stuff.
+
 all: build/bin/main_simple build/bin/main_simple_threaded
 
 
