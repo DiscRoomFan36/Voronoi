@@ -14,10 +14,6 @@ float dist_sqr(float x1, float y1, float x2, float y2) {
     return (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
 }
 
-#define USE_THREADS
-
-#ifdef USE_THREADS
-
 // because VSCode is being stupid
 // we need this for barriers
 #ifndef __USE_XOPEN2K
@@ -99,12 +95,9 @@ void *thread_function(void *args) {
     return NULL;
 }
 
-#endif // USE_THREADS
-
 
 void init_voronoi(void) {
 
-#ifdef USE_THREADS
     if (pthread_barrier_init(&start_barrier, NULL, NUM_THREADS+1)) {
         fprintf(stderr, "ERROR: cannot init start barrier\n");
         exit(1);
@@ -124,8 +117,6 @@ void init_voronoi(void) {
             exit(1);
         }
     }
-#endif // USE_THREADS
-
 }
 
 void finish_voronoi(void) {
@@ -134,7 +125,6 @@ void finish_voronoi(void) {
     pixel_buf = 0;
     buf_capacity = 0;
 
-#ifdef USE_THREADS
     finished = true;
     pthread_barrier_wait(&start_barrier);
 
@@ -148,7 +138,6 @@ void finish_voronoi(void) {
 
     pthread_barrier_destroy(&start_barrier);
     pthread_barrier_destroy(&end_barrier);
-#endif // USE_THREADS
 }
 
 
@@ -165,41 +154,18 @@ void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t
 
     PROFILER_ZONE("Calculate pixel buffer");
 
-#ifdef USE_THREADS
-    // setup
-    thread_width  = width;
-    thread_height = height;
-    thread_points = points;
-    thread_colors = colors;
-    thread_num_points = num_points;
-    counter = 0;
+        // setup
+        thread_width  = width;
+        thread_height = height;
+        thread_points = points;
+        thread_colors = colors;
+        thread_num_points = num_points;
+        counter = 0;
 
-    // start the waiting threads
-    pthread_barrier_wait(&start_barrier);
-    // wait for them to stop
-    pthread_barrier_wait(&end_barrier);
-
-#else
-
-    for (size_t j = 0; j < height; j++) {
-        for (size_t i = 0; i < width; i++) {
-
-            // find the closest point
-            size_t close_index = 0;
-            float d1 = dist_sqr(points[0].x, points[0].y, i, j);
-            for (size_t k = 1; k < num_points; k++) {
-                float d2 = dist_sqr(points[k].x, points[k].y, i, j);
-                if (d2 < d1) {
-                    d1 = d2;
-                    close_index = k;
-                }
-            }
-
-            pixel_buf[j * width + i] = colors[close_index];
-        }
-    }
-
-#endif // USE_THREADS
+        // start the waiting threads
+        pthread_barrier_wait(&start_barrier);
+        // wait for them to stop
+        pthread_barrier_wait(&end_barrier);
 
     PROFILER_ZONE_END();
 
@@ -208,8 +174,6 @@ void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t
     BeginTextureMode(target);
 
     for (size_t j = 0; j < height; j++) {
-        // find a band of the same color.
-        // this is MUCH faster than just useing DrawPixel()
         size_t i = 0;
         while (i < width) {
             size_t low_i = i;
@@ -218,8 +182,6 @@ void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t
                 if (!ColorIsEqual(this_color, pixel_buf[j*width + i])) break;
             }
 
-            // remember to draw this upsidedown.
-            // bc how textures work, and the API demands it.
             DrawRectangle(low_i, height - 1 - j, i - low_i, 1, this_color);
         }
     }

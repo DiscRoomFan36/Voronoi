@@ -1,4 +1,5 @@
 raylib*
-main
 .vscode
-*.o
+
+build/
+
