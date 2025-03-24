@@ -74,10 +74,10 @@ float randf(void) {
 }
 
 int main(void) {
+    init_voronoi();
+
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(screen_width, screen_height, "Voronoi");
-
-    init_voronoi();
 
     assert(NUM_POINTS > 0);
     Vector2 points_pos[NUM_POINTS] = {0};
