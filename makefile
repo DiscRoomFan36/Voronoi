@@ -19,4 +19,4 @@ voronoi.o: voronoi.h voronoi.c profiler.h
 	$(CC) $(CFLAGS) $(DEFINES) -c -o voronoi.o voronoi.c
 
 clean:
-	rm main
+	rm main *.o
