@@ -11,7 +11,7 @@ RAYLIB_FLAGS = -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 
 # TODO make this cleaner with %.o: %.c stuff.
 
-all: build/bin/main_simple build/bin/main_simple_threaded
+all: build/bin/main_simple build/bin/main_simple_threaded build/bin/main_shader
 
 
 # ---------------------------------------------------
@@ -24,6 +24,9 @@ build/bin/main_simple: build/main.o build/voronoi_simple.o                      
 
 build/bin/main_simple_threaded: build/main.o build/voronoi_simple_threaded.o      | build/bin
 	$(CC) $(CFLAGS) $(DEFINES) -o build/bin/main_simple_threaded build/main.o build/voronoi_simple_threaded.o $(RAYLIB_FLAGS)
+
+build/bin/main_shader: build/main.o build/voronoi_shader.o                        | build/bin
+	$(CC) $(CFLAGS) $(DEFINES) -o build/bin/main_shader build/main.o build/voronoi_shader.o $(RAYLIB_FLAGS)
 
 
 # ---------------------------------------------------
@@ -43,6 +46,9 @@ build/voronoi_simple.o: voronoi.h voronoi_simple.c profiler.h                   
 
 build/voronoi_simple_threaded.o: voronoi.h voronoi_simple_threaded.c profiler.h    | build
 	$(CC) $(CFLAGS) $(DEFINES) -c -o build/voronoi_simple_threaded.o voronoi_simple_threaded.c
+
+build/voronoi_shader.o: voronoi.h voronoi_shader.c shader.fs profiler.h            | build
+	$(CC) $(CFLAGS) $(DEFINES) -c -o build/voronoi_shader.o voronoi_shader.c
 
 
 

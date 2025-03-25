@@ -14,7 +14,7 @@
 
 // in pixels per second
 #define SPEED 100
-#define NUM_POINTS 3
+#define NUM_POINTS 256
 
 int screen_width  = 1600;
 int screen_height =  900;
