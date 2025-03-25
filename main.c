@@ -14,7 +14,7 @@
 
 // in pixels per second
 #define SPEED 100
-#define NUM_POINTS 100
+#define NUM_POINTS 3
 
 int screen_width  = 1600;
 int screen_height =  900;
@@ -70,14 +70,16 @@ void draw_profiler(void) {
 
 
 float randf(void) {
-    return (float) GetRandomValue(0, __INT_MAX__) / (float) __INT_MAX__;
+    return (float) rand() / (float) RAND_MAX;
 }
 
 int main(void) {
-    init_voronoi();
+    srand(0);
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(screen_width, screen_height, "Voronoi");
+
+    init_voronoi();
 
     assert(NUM_POINTS > 0);
     Vector2 points_pos[NUM_POINTS] = {0};
@@ -92,8 +94,8 @@ int main(void) {
         points_vel[i].x = randf() * (SPEED-1) + 1;
         points_vel[i].y = randf() * (SPEED-1) + 1;
 
-        if (GetRandomValue(0, 1)) points_vel[i].x *= -1;
-        if (GetRandomValue(0, 1)) points_vel[i].y *= -1;
+        if (rand() % 2) points_vel[i].x *= -1;
+        if (rand() % 2) points_vel[i].y *= -1;
 
         points_colors[i] = ColorFromHSV(randf() * 360, 0.7, 0.7);
     }
@@ -149,7 +151,7 @@ int main(void) {
 
 
         BeginDrawing();
-        ClearBackground(RED);
+        ClearBackground(MAGENTA);
 
         PROFILER_ZONE("voronoi the background");
             draw_voronoi(target, points_pos, points_colors, NUM_POINTS);
@@ -177,10 +179,10 @@ int main(void) {
 
     UnloadRenderTexture(target);
 
+    finish_voronoi();
+
     CloseWindow();
     PROFILER_FREE();
-
-    finish_voronoi();
 
     return 0;
 }
