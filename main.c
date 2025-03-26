@@ -14,7 +14,6 @@
 
 // in pixels per second
 #define SPEED 100
-#define NUM_POINTS 256
 
 int screen_width  = 1600;
 int screen_height =  900;
@@ -65,34 +64,78 @@ float randf(void) {
     return (float) rand() / (float) RAND_MAX;
 }
 
-int main(void) {
-    srand(0);
 
+#define da_append(da, item)                                                                                \
+    do {                                                                                                   \
+        if ((da)->count >= (da)->capacity) {                                                               \
+            (da)->capacity = (da)->capacity == 0 ? 32 : (da)->capacity*2;                                  \
+            (da)->items = (typeof((da)->items)) realloc((da)->items, (da)->capacity*sizeof(*(da)->items)); \
+            assert((da)->items != NULL && "Buy More RAM lol");                                             \
+        }                                                                                                  \
+                                                                                                           \
+        (da)->items[(da)->count++] = (item);                                                               \
+    } while (0)
+
+#define da_free(da)                         \
+    do {                                    \
+        if ((da)->items) free((da)->items); \
+        (da)->items    = 0;                 \
+        (da)->count    = 0;                 \
+        (da)->capacity = 0;                 \
+    } while (0)
+
+
+typedef struct  {
+    Vector2 *items;
+    size_t count;
+    size_t capacity;
+} Vector2_Array;
+
+typedef struct Color_Array {
+    Color *items;
+    size_t count;
+    size_t capacity;
+} Color_Array;
+
+
+Vector2_Array points_pos = {0};
+Vector2_Array points_vel = {0};
+Color_Array points_colors = {0};
+
+
+void add_new_point() {
+    Vector2 new_pos = {
+        .x = randf() * screen_width,
+        .y = randf() * screen_height,
+    };
+
+    Vector2 new_vel = {
+        .x = (randf() * (SPEED-1) + 1),
+        .y = (randf() * (SPEED-1) + 1),
+    };
+    if (rand() % 2) new_vel.x *= -1;
+    if (rand() % 2) new_vel.y *= -1;
+
+    Color new_color = ColorFromHSV(randf() * 360, 0.7, 0.7);
+
+    da_append(&points_pos,    new_pos);
+    da_append(&points_vel,    new_vel);
+    da_append(&points_colors, new_color);
+}
+
+
+int main(void) {
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(screen_width, screen_height, "Voronoi");
 
     init_voronoi();
 
-    assert(NUM_POINTS > 0);
-    Vector2 points_pos[NUM_POINTS] = {0};
-    Vector2 points_vel[NUM_POINTS] = {0};
-    Color points_colors[NUM_POINTS] = {0};
+    size_t num_points = 10;
 
-
-    for (size_t i = 0; i < NUM_POINTS; i++) {
-        points_pos[i].x  = randf() * screen_width;
-        points_pos[i].y  = randf() * screen_height;
-
-        points_vel[i].x = randf() * (SPEED-1) + 1;
-        points_vel[i].y = randf() * (SPEED-1) + 1;
-
-        if (rand() % 2) points_vel[i].x *= -1;
-        if (rand() % 2) points_vel[i].y *= -1;
-
-        points_colors[i] = ColorFromHSV(randf() * 360, 0.7, 0.7);
-    }
+    for (size_t i = 0; i < num_points; i++) add_new_point();
 
     bool paused = false;
+    bool reset_profiler = false;
 
     RenderTexture2D target = LoadRenderTexture(screen_width, screen_height);
 
@@ -113,8 +156,38 @@ int main(void) {
         assert(screen_width > 0 && screen_height > 0);
 
 
-        { // keys
+        { // key toggles
             paused ^= IsKeyPressed(KEY_SPACE);
+            reset_profiler ^= IsKeyPressed(KEY_R);
+        }
+
+        { // Change number of points
+            size_t old_num_points = num_points;
+
+            if (IsKeyPressed(KEY_UP)) {
+                num_points += 100;
+            }
+            if (IsKeyPressed(KEY_DOWN)) {
+                if (num_points < 100) num_points = 100;
+                num_points -= 100;
+            }
+            if (IsKeyPressed(KEY_RIGHT)) {
+                num_points += 10;
+            }
+            if (IsKeyPressed(KEY_LEFT)) {
+                if (num_points < 10) num_points = 10;
+                num_points -= 10;
+            }
+
+            if (num_points > old_num_points) {
+                // add some more points
+                for (size_t i = 0; i < num_points - old_num_points; i++) add_new_point();
+            } else if (num_points < old_num_points) {
+                // remove some points
+                points_pos   .count = num_points;
+                points_vel   .count = num_points;
+                points_colors.count = num_points;
+            }
         }
 
 
@@ -126,17 +199,17 @@ int main(void) {
         PROFILER_ZONE("walk points");
             // move points in a random walk
             // TODO make better
-            for (size_t i = 0; i < NUM_POINTS; i++) {
-                Vector2 *xy  = &points_pos[i];
-                Vector2 *vxy = &points_vel[i];
+            for (size_t i = 0; i < num_points; i++) {
+                Vector2 *xy  = &points_pos.items[i];
+                Vector2 *vxy = &points_vel.items[i];
 
                 xy->x += vxy->x * delta;
                 xy->y += vxy->y * delta;
 
-                if (xy->x < 0)      vxy->x =  fabs(vxy->x);
+                if (xy->x < 0)             vxy->x =  fabs(vxy->x);
                 if (xy->x > screen_width)  vxy->x = -fabs(vxy->x);
 
-                if (xy->y < 0)      vxy->y =  fabs(vxy->y);
+                if (xy->y < 0)             vxy->y =  fabs(vxy->y);
                 if (xy->y > screen_height) vxy->y = -fabs(vxy->y);
             }
         PROFILER_ZONE_END();
@@ -146,14 +219,23 @@ int main(void) {
         ClearBackground(MAGENTA);
 
         PROFILER_ZONE("voronoi the background");
-            draw_voronoi(target, points_pos, points_colors, NUM_POINTS);
+            draw_voronoi(target, points_pos.items, points_colors.items, num_points);
 
             DrawTexture(target.texture, 0, 0, WHITE);
         PROFILER_ZONE_END();
 
-        for (size_t i = 0; i < NUM_POINTS; i++) {
-            DrawCircleV(points_pos[i], 5, BLUE);
+        PROFILER_ZONE("draw the points");
+        for (size_t i = 0; i < num_points; i++) {
+            DrawCircleV(points_pos.items[i], 5, BLUE);
         }
+        PROFILER_ZONE_END();
+
+        { // draw num points
+            const char *text = TextFormat("Points: %6zu", num_points);
+            int text_width = MeasureText(text, FONT_SIZE);
+            DrawText(text, screen_width/2 - text_width/2, 10, FONT_SIZE, WHITE);
+        }
+
 
         DrawFPS(10, 10);
 
@@ -166,7 +248,12 @@ int main(void) {
         EndDrawing();
 
         PROFILER_ZONE_END();
-        if (profiler_zone_count() > 65536) PROFILER_RESET();
+
+        reset_profiler |= profiler_zone_count() > 65536;
+        if (reset_profiler) {
+            reset_profiler = false;
+            PROFILER_RESET();
+        }
     }
 
     UnloadRenderTexture(target);
