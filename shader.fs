@@ -4,18 +4,15 @@ in vec2 fragTexCoord;
 
 out vec4 finalColor;
 
+// The bottleneck, we cant have to many points, the shader cant handle it.
 #define MAX_POINTS 256
 
 uniform int num_points;
 uniform vec2 points[MAX_POINTS];
 uniform int colors[MAX_POINTS]; // packed RGBA color (an [r, g, b, a] array)
 
-const float width  = 1600;
-const float height =  900;
-
-float dist_sqr(in vec2 a, in vec2 b) {
-    return (a.x-b.x)*(a.x-b.x) + (a.y-b.y)*(a.y-b.y);
-}
+uniform int width;
+uniform int height;
 
 void main() {
     if (num_points > MAX_POINTS) {
@@ -33,7 +30,6 @@ void main() {
     int close_index = 0;
     float d1 = length(pos - points[0]);
     for (int i = 0; i < num_points; i++) {
-
         float d2 = length(pos - points[i]);
         if (d2 < d1) {
             d1 = d2;
@@ -41,7 +37,7 @@ void main() {
         }
     }
 
-    int  color = colors[close_index];
+    int color = colors[close_index];
 
     float r = ((color >> 0*8) & 0xFF) / 255.0;
     float g = ((color >> 1*8) & 0xFF) / 255.0;
