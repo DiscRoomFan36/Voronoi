@@ -23,7 +23,6 @@ int screen_height =  900;
 void draw_profiler(void) {
     // TODO this is inefficient...
     Profiler_Stats_Array stats = collect_stats();
-    Double_Array numbers = {0};
 
     int numbers_width = MeasureText(": 0.000000 +- 0.000000", FONT_SIZE);
 
@@ -39,13 +38,7 @@ void draw_profiler(void) {
     for (size_t i = 0; i < stats.count; i++) {
         Profiler_Stats stat = stats.items[i];
 
-        numbers.count = 0;
-        for (size_t i = 0; i < stat.times.count; i++) {
-            profiler_da_append(&numbers, stat.times.items[i]);
-        }
-
-        Numerical_Average_Bounds nab = get_numerical_average(numbers);
-
+        Numerical_Average_Bounds nab = get_numerical_average(stat.times);
 
         const char *title_text = TextFormat("%-30s", stat.title, nab.sample_mean, nab.standard_deviation);
         const char *numbers_text = TextFormat(": %.6f +- %.6f", nab.sample_mean, nab.standard_deviation);
@@ -65,7 +58,6 @@ void draw_profiler(void) {
         profiler_da_free(&stats.items[i].times);
     }
     profiler_da_free(&stats);
-    profiler_da_free(&numbers);
 }
 
 
@@ -174,7 +166,7 @@ int main(void) {
         EndDrawing();
 
         PROFILER_ZONE_END();
-        // if (profiler_zone_count() > 1028) PROFILER_RESET();
+        if (profiler_zone_count() > 65536) PROFILER_RESET();
     }
 
     UnloadRenderTexture(target);

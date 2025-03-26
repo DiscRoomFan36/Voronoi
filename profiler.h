@@ -95,6 +95,8 @@ void profiler_free(void);
 
 Profiler_Stats_Array collect_stats(void);
 
+size_t profiler_zone_count(void);
+
 
 #define profiler_da_append(da, item)                                                                        \
     do {                                                                                                   \
@@ -281,6 +283,10 @@ Profiler_Stats_Array collect_stats(void) {
 
     profiler_da_free(&unique_data);
     return result;
+}
+
+size_t profiler_zone_count(void) {
+    return __base_zones.count;
 }
 
 
