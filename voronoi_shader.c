@@ -22,10 +22,11 @@ int width_loc;
 int height_loc;
 
 
-#define SHADER_PATH "shader.fs"
+#define SHADER_PATH "shader.glsl"
 
 void init_voronoi(void) {
     shader = LoadShader(0, SHADER_PATH);
+    assert(IsShaderValid(shader));
 
     num_points_loc = GetShaderLocation(shader, "num_points");
     points_loc     = GetShaderLocation(shader, "points");
