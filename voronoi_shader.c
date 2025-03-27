@@ -35,12 +35,12 @@ void init_voronoi(void) {
     width_loc      = GetShaderLocation(shader, "width");
     height_loc     = GetShaderLocation(shader, "height");
 
-    if (num_points_loc != -1) fprintf(stderr, "WARNING: 'num_points_loc' was not set\n");
-    if (points_loc     != -1) fprintf(stderr, "WARNING: 'points_loc' was not set\n");
-    if (colors_loc     != -1) fprintf(stderr, "WARNING: 'colors_loc' was not set\n");
+    if (num_points_loc == -1) fprintf(stderr, "WARNING: 'num_points_loc' was not set\n");
+    if (points_loc     == -1) fprintf(stderr, "WARNING: 'points_loc' was not set\n");
+    if (colors_loc     == -1) fprintf(stderr, "WARNING: 'colors_loc' was not set\n");
 
-    if (width_loc      != -1) fprintf(stderr, "WARNING: 'width_loc'  was not set\n");
-    if (height_loc     != -1) fprintf(stderr, "WARNING: 'height_loc' was not set\n");
+    if (width_loc      == -1) fprintf(stderr, "WARNING: 'width_loc'  was not set\n");
+    if (height_loc     == -1) fprintf(stderr, "WARNING: 'height_loc' was not set\n");
 
     small_buffer = LoadRenderTexture(1, 1);
 }
