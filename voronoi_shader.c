@@ -10,8 +10,7 @@ float dist_sqr(float x1, float y1, float x2, float y2) {
 }
 
 Shader shader;
-
-RenderTexture2D small_buffer;
+RenderTexture2D small_texture;
 
 // uniform variables
 int num_points_loc;
@@ -42,12 +41,12 @@ void init_voronoi(void) {
     if (width_loc      == -1) fprintf(stderr, "WARNING: 'width_loc'  was not set\n");
     if (height_loc     == -1) fprintf(stderr, "WARNING: 'height_loc' was not set\n");
 
-    small_buffer = LoadRenderTexture(1, 1);
+    small_texture = LoadRenderTexture(1, 1);
 }
 
 void finish_voronoi(void) {
     UnloadShader(shader);
-    UnloadRenderTexture(small_buffer);
+    UnloadRenderTexture(small_texture);
 }
 
 
@@ -66,7 +65,7 @@ void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t
         BeginShaderMode(shader);
             // just draw over the entire screen
             DrawTexturePro(
-                small_buffer.texture,
+                small_texture.texture,
                 (Rectangle){0, 0, 1, 1},
                 (Rectangle){0, 0, target.texture.width, target.texture.height},
                 (Vector2){0, 0},
