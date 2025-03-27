@@ -136,6 +136,7 @@ int main(void) {
 
     bool paused = false;
     bool reset_profiler = false;
+    bool draw_points = true;
 
     RenderTexture2D target = LoadRenderTexture(screen_width, screen_height);
 
@@ -157,8 +158,9 @@ int main(void) {
 
 
         { // key toggles
-            paused ^= IsKeyPressed(KEY_SPACE);
+            paused         ^= IsKeyPressed(KEY_SPACE);
             reset_profiler ^= IsKeyPressed(KEY_R);
+            draw_points    ^= IsKeyPressed(KEY_P);
         }
 
         { // Change number of points
@@ -225,8 +227,10 @@ int main(void) {
         PROFILER_ZONE_END();
 
         PROFILER_ZONE("draw the points");
-        for (size_t i = 0; i < num_points; i++) {
-            DrawCircleV(points_pos.items[i], 5, BLUE);
+        if (draw_points) {
+            for (size_t i = 0; i < num_points; i++) {
+                DrawCircleV(points_pos.items[i], 5, BLUE);
+            }
         }
         PROFILER_ZONE_END();
 
