@@ -3,14 +3,10 @@
 
 #include "voronoi.h"
 
-// #include <raylib.h>
 #include <rlgl.h>
 
 #include "profiler.h"
 
-float dist_sqr(float x1, float y1, float x2, float y2) {
-    return (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
-}
 
 typedef unsigned int ShaderBufferId;
 
