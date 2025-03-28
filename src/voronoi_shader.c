@@ -18,7 +18,7 @@ int width_loc;
 int height_loc;
 
 
-#define SHADER_PATH "shader.glsl"
+#define SHADER_PATH "./shaders/shader.glsl"
 
 void init_voronoi(void) {
     shader = LoadShader(0, SHADER_PATH);

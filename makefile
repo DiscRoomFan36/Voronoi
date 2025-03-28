@@ -36,25 +36,25 @@ build/bin/main_shader_buffer: build/main.o build/voronoi_shader_buffer.o        
 #                  The Main File
 # ---------------------------------------------------
 
-build/main.o: main.c voronoi.h profiler.h    | build
-	$(CC) $(CFLAGS) $(DEFINES) -c -o build/main.o main.c
+build/main.o: src/main.c src/voronoi.h src/profiler.h    | build
+	$(CC) $(CFLAGS) $(DEFINES) -c -o build/main.o src/main.c
 
 
 # ---------------------------------------------------
 #             Different Voronoi Backends
 # ---------------------------------------------------
 
-build/voronoi_simple.o: voronoi.h voronoi_simple.c profiler.h                                     | build
-	$(CC) $(CFLAGS) $(DEFINES) -c -o build/voronoi_simple.o voronoi_simple.c
+build/voronoi_simple.o: src/voronoi.h src/voronoi_simple.c src/profiler.h                                     | build
+	$(CC) $(CFLAGS) $(DEFINES) -c -o build/voronoi_simple.o src/voronoi_simple.c
 
-build/voronoi_simple_threaded.o: voronoi.h voronoi_simple_threaded.c profiler.h                   | build
-	$(CC) $(CFLAGS) $(DEFINES) -c -o build/voronoi_simple_threaded.o voronoi_simple_threaded.c
+build/voronoi_simple_threaded.o: src/voronoi.h src/voronoi_simple_threaded.c src/profiler.h                   | build
+	$(CC) $(CFLAGS) $(DEFINES) -c -o build/voronoi_simple_threaded.o src/voronoi_simple_threaded.c
 
-build/voronoi_shader.o: voronoi.h voronoi_shader.c shader.glsl profiler.h                         | build
-	$(CC) $(CFLAGS) $(DEFINES) -c -o build/voronoi_shader.o voronoi_shader.c
+build/voronoi_shader.o: src/voronoi.h src/voronoi_shader.c shaders/shader.glsl src/profiler.h                         | build
+	$(CC) $(CFLAGS) $(DEFINES) -c -o build/voronoi_shader.o src/voronoi_shader.c
 
-build/voronoi_shader_buffer.o: voronoi.h voronoi_shader_buffer.c shader_buffer.glsl profiler.h    | build
-	$(CC) $(CFLAGS) $(DEFINES) -c -o build/voronoi_shader_buffer.o voronoi_shader_buffer.c
+build/voronoi_shader_buffer.o: src/voronoi.h src/voronoi_shader_buffer.c shaders/shader_buffer.glsl src/profiler.h    | build
+	$(CC) $(CFLAGS) $(DEFINES) -c -o build/voronoi_shader_buffer.o src/voronoi_shader_buffer.c
 
 
 

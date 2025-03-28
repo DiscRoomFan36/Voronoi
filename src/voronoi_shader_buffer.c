@@ -25,7 +25,7 @@ int num_points_loc;
 
 
 
-#define SHADER_PATH "shader_buffer.glsl"
+#define SHADER_PATH "./shaders/shader_buffer.glsl"
 
 void init_voronoi(void) {
     shader = LoadShader(0, SHADER_PATH);
