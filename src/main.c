@@ -124,13 +124,23 @@ void add_new_point() {
 }
 
 
-int main(void) {
+int main(int argc, char const **argv) {
+    const char *program = argv[0];
+    if (!(argc == 1 || argc == 2)) {
+        fprintf(stderr, "USAGE: %s [NUM_POINTS=10]\n", program);
+        return 1;
+    }
+
+    size_t num_points = 10;
+    if (argc == 2) num_points = atol(argv[1]);
+
+    srand(time(0));
+
+
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(screen_width, screen_height, "Voronoi");
 
     init_voronoi();
-
-    size_t num_points = 10;
 
     for (size_t i = 0; i < num_points; i++) add_new_point();
 
