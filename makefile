@@ -11,7 +11,7 @@ RAYLIB_FLAGS = -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 
 # TODO make this cleaner with %.o: %.c stuff.
 
-all: build/bin/main_simple build/bin/main_simple_threaded build/bin/main_shader build/bin/main_shader_buffer
+all: build/bin/main_simple build/bin/main_simple_threaded build/bin/main_shader build/bin/main_shader_buffer build/bin/main_with_math
 
 
 # ---------------------------------------------------
@@ -30,6 +30,9 @@ build/bin/main_shader: build/main.o build/voronoi_shader.o                      
 
 build/bin/main_shader_buffer: build/main.o build/voronoi_shader_buffer.o          | build/bin
 	$(CC) $(CFLAGS) $(DEFINES) -o build/bin/main_shader_buffer build/main.o build/voronoi_shader_buffer.o $(RAYLIB_FLAGS)
+
+build/bin/main_with_math: build/main.o build/voronoi_with_math.o                  | build/bin
+	$(CC) $(CFLAGS) $(DEFINES) -o build/bin/main_with_math build/main.o build/voronoi_with_math.o $(RAYLIB_FLAGS)
 
 
 # ---------------------------------------------------
@@ -55,6 +58,9 @@ build/voronoi_shader.o: src/voronoi.h src/voronoi_shader.c src/profiler.h       
 
 build/voronoi_shader_buffer.o: src/voronoi.h src/voronoi_shader_buffer.c src/profiler.h                       | build
 	$(CC) $(CFLAGS) $(DEFINES) -c -o build/voronoi_shader_buffer.o src/voronoi_shader_buffer.c
+
+build/voronoi_with_math.o: src/voronoi.h src/voronoi_with_math.c src/profiler.h                               | build
+	$(CC) $(CFLAGS) $(DEFINES) -c -o build/voronoi_with_math.o src/voronoi_with_math.c
 
 
 
