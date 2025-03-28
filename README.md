@@ -1,8 +1,11 @@
-# Voronoi
+# Voronoi Diagrams
 
 Simple Voronoi diagram with bouncing points.
 Various backends, with differing performance levels
 and characteristics, for your enjoyment.
+
+![voronoi 10 points](./images/voronoi_10_points.png)
+![voronoi 5000 points](./images/voronoi_5000_points.png)
 
 ## Key Binds
 
