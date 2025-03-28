@@ -12,11 +12,11 @@
     #define PROFILER_FREE()  profiler_free()
 #else
     #define PROFILER_ZONE(...)
-    #define PROFILER_ZONE_END(...)
+    #define PROFILER_ZONE_END()
 
-    #define PROFILER_PRINT(...)
-    #define PROFILER_RESET(...)
-    #define PROFILER_FREE(...)
+    #define PROFILER_PRINT()
+    #define PROFILER_RESET()
+    #define PROFILER_FREE()
 #endif // PROFILE_CODE
 
 
