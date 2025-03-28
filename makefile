@@ -50,10 +50,10 @@ build/voronoi_simple.o: src/voronoi.h src/voronoi_simple.c src/profiler.h       
 build/voronoi_simple_threaded.o: src/voronoi.h src/voronoi_simple_threaded.c src/profiler.h                   | build
 	$(CC) $(CFLAGS) $(DEFINES) -c -o build/voronoi_simple_threaded.o src/voronoi_simple_threaded.c
 
-build/voronoi_shader.o: src/voronoi.h src/voronoi_shader.c shaders/shader.glsl src/profiler.h                         | build
+build/voronoi_shader.o: src/voronoi.h src/voronoi_shader.c src/profiler.h                                     | build
 	$(CC) $(CFLAGS) $(DEFINES) -c -o build/voronoi_shader.o src/voronoi_shader.c
 
-build/voronoi_shader_buffer.o: src/voronoi.h src/voronoi_shader_buffer.c shaders/shader_buffer.glsl src/profiler.h    | build
+build/voronoi_shader_buffer.o: src/voronoi.h src/voronoi_shader_buffer.c src/profiler.h                       | build
 	$(CC) $(CFLAGS) $(DEFINES) -c -o build/voronoi_shader_buffer.o src/voronoi_shader_buffer.c
 
 

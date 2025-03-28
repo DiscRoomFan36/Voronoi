@@ -18,10 +18,59 @@ int width_loc;
 int height_loc;
 
 
-#define SHADER_PATH "./shaders/shader.glsl"
+const char *shader_code =
+    "#version 330\n"
+
+    "in vec2 fragTexCoord;\n"
+
+    "out vec4 finalColor;\n"
+
+    "// The bottleneck, we cant have to many points, the shader cant handle it.\n"
+    "#define MAX_POINTS 256\n"
+
+    "uniform int num_points;\n"
+    "uniform vec2 points[MAX_POINTS];\n"
+    "uniform int colors[MAX_POINTS]; // packed RGBA color (an [r, g, b, a] array)\n"
+
+    "uniform int width;\n"
+    "uniform int height;\n"
+
+    "void main() {\n"
+    "    if (num_points > MAX_POINTS) {\n"
+    "        // this is an error!\n"
+    "        finalColor = vec4(0, 0, 0, 1);\n"
+    "        return;\n"
+    "    }\n"
+
+    "    vec2 pos = vec2(fragTexCoord.x * width, fragTexCoord.y * height);\n"
+
+    "    // flip the y because of handed-ness\n"
+    "    pos.y = height - pos.y;\n"
+
+    "    // find the closest\n"
+    "    int close_index = 0;\n"
+    "    float d1 = length(pos - points[0]);\n"
+    "    for (int i = 0; i < num_points; i++) {\n"
+    "        float d2 = length(pos - points[i]);\n"
+    "        if (d2 < d1) {\n"
+    "            d1 = d2;\n"
+    "            close_index = i;\n"
+    "        }\n"
+    "    }\n"
+
+    "    int color = colors[close_index];\n"
+
+    "    float r = ((color >> 0*8) & 0xFF) / 255.0;\n"
+    "    float g = ((color >> 1*8) & 0xFF) / 255.0;\n"
+    "    float b = ((color >> 2*8) & 0xFF) / 255.0;\n"
+    "    float a = ((color >> 3*8) & 0xFF) / 255.0;\n"
+
+    "    finalColor = vec4(r, g, b, a);\n"
+    "}\n";
+
 
 void init_voronoi(void) {
-    shader = LoadShader(0, SHADER_PATH);
+    shader = LoadShaderFromMemory(0, shader_code);
     assert(IsShaderValid(shader));
 
     num_points_loc = GetShaderLocation(shader, "num_points");

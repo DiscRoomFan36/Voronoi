@@ -24,11 +24,64 @@ int height_loc;
 int num_points_loc;
 
 
+const char *shader_code = 
+    "#version 430\n"
 
-#define SHADER_PATH "./shaders/shader_buffer.glsl"
+    "in vec2 fragTexCoord;\n"
+
+    "out vec4 finalColor;\n"
+
+
+    "uniform int width;\n"
+    "uniform int height;\n"
+
+    "uniform int num_points;\n"
+
+
+    "layout(std430, binding = 1) buffer PositionBufferLayout {\n"
+    "    vec2 position_buffer[]; // positions of the points\n"
+    "};\n"
+
+    "layout(std430, binding = 2) buffer ColorBufferLayout {\n"
+    "    int color_buffer[]; // [r, g, b, a] array\n"
+    "};\n"
+
+
+    "void main() {\n"
+    "    if (num_points == 0) {\n"
+    "        finalColor = vec4(0, 0, 0, 1); // make this clear?\n"
+    "        return;\n"
+    "    }\n"
+
+    "    vec2 pos = vec2(fragTexCoord.x * width, fragTexCoord.y * height);\n"
+
+    "    // flip the y because of handed-ness\n"
+    "    pos.y = height - pos.y;\n"
+
+    "    // find the closest\n"
+    "    int close_index = 0;\n"
+    "    float d1 = length(pos - position_buffer[0]);\n"
+    "    for (int i = 0; i < num_points; i++) {\n"
+    "        float d2 = length(pos - position_buffer[i]);\n"
+    "        if (d2 < d1) {\n"
+    "            d1 = d2;\n"
+    "            close_index = i;\n"
+    "        }\n"
+    "    }\n"
+
+    "    int color = color_buffer[close_index];\n"
+
+    "    float r = ((color >> 0*8) & 0xFF) / 255.0;\n"
+    "    float g = ((color >> 1*8) & 0xFF) / 255.0;\n"
+    "    float b = ((color >> 2*8) & 0xFF) / 255.0;\n"
+    "    float a = ((color >> 3*8) & 0xFF) / 255.0;\n"
+
+    "    finalColor = vec4(r, g, b, a);\n"
+    "}\n";
+
 
 void init_voronoi(void) {
-    shader = LoadShader(0, SHADER_PATH);
+    shader = LoadShaderFromMemory(0, shader_code);
     assert(IsShaderValid(shader));
 
     small_texture = LoadRenderTexture(1, 1);
