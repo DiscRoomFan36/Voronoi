@@ -233,9 +233,7 @@ int main(int argc, char const **argv) {
         PROFILER_ZONE("voronoi the background");
             draw_voronoi(target, points_pos.items, points_colors.items, num_points);
 
-            // DrawTexture(target.texture, 0, 0, WHITE);
-            // nocheckin temporarily flip the image
-            DrawTexturePro(target.texture, (Rectangle){0, 0, target.texture.width, -target.texture.height}, (Rectangle){0, 0, screen_width, screen_height}, (Vector2){0, 0}, 0, WHITE);
+            DrawTexture(target.texture, 0, 0, WHITE);
         PROFILER_ZONE_END();
 
         PROFILER_ZONE("draw the points");
