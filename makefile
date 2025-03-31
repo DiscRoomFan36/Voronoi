@@ -2,7 +2,7 @@
 CC = clang
 
 CFLAGS = -Wall -Wextra -ggdb
-CFLAGS += -O2
+# CFLAGS += -O2
 
 DEFINES += -DPROFILE_CODE
 

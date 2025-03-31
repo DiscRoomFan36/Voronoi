@@ -241,7 +241,8 @@ int main(int argc, char const **argv) {
         PROFILER_ZONE("draw the points");
         if (draw_points) {
             for (size_t i = 0; i < num_points; i++) {
-                DrawCircleV(points_pos.items[i], 5, BLUE);
+                DrawCircleV(points_pos.items[i], 10, BLUE);
+                DrawCircleV(points_pos.items[i], 7, points_colors.items[i]);
             }
         }
         PROFILER_ZONE_END();
