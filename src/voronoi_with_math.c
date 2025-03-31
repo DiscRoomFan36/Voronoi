@@ -217,6 +217,10 @@ void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t
     //
     // (the above algorithm is still O(n^2) in the worst case, but the average
     // case is O(n*c))
+    //
+    // ALSO NOTE: this solution get 600 points before dropping below 60fps,
+    // and that is without, useing multithreading, (witch the optimized solution above
+    // will also be acceptable to.), a 5x-6x speedup is easily possible.
 
 
 
