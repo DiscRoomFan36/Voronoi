@@ -39,9 +39,17 @@ $ ./build/bin/main_shader
 $ ./build/bin/main_shader_buffer
 
 
+# math solutions, CPU based.
+
+# math! about 600 points before below 60fps
+# NOTE please ignore the right side of the screen
+$ ./build/bin/main_with_math
+
+
 # when your done, just delete the build/ folder
 $ make clean
 ```
+
 
 ## NOTE
 main_shader_buffer requires the **GRAPHICS_API_OPENGL_43** flag
