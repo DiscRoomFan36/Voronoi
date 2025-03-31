@@ -59,7 +59,7 @@ build/voronoi_shader.o: src/voronoi.h src/voronoi_shader.c src/profiler.h       
 build/voronoi_shader_buffer.o: src/voronoi.h src/voronoi_shader_buffer.c src/profiler.h                       | build
 	$(CC) $(CFLAGS) $(DEFINES) -c -o build/voronoi_shader_buffer.o src/voronoi_shader_buffer.c
 
-build/voronoi_with_math.o: src/voronoi.h src/voronoi_with_math.c src/profiler.h                               | build
+build/voronoi_with_math.o: src/voronoi.h src/voronoi_with_math.c                                              | build
 	$(CC) $(CFLAGS) $(DEFINES) -c -o build/voronoi_with_math.o src/voronoi_with_math.c
 
 
