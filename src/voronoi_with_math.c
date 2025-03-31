@@ -6,8 +6,6 @@
 
 #include "raymath.h"
 
-#include "profiler.h"
-
 
 #define da_append(da, item)                                                                                \
     do {                                                                                                   \
@@ -88,6 +86,8 @@ Vector2 line_line_intersection(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4) {
     return (Vector2){i_x, i_y};
 }
 
+// check if two line points, are intersected with a point
+// that is known to intersect with it.
 bool intersection_point_intersects(Vector2 p1, Vector2 p2, Vector2 intersect) {
     if (p1.x == p2.x) {
         // vertical line
@@ -152,7 +152,6 @@ void init_voronoi(void) {
 
 void finish_voronoi(void) {
     da_free(&polygon);
-
     da_free(&tmp_poly1);
     da_free(&tmp_poly2);
 }
@@ -181,6 +180,46 @@ void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t
     // 8. repeat 1-7 for every point.
 
 
+    // Notes:
+    //
+    // I believe this solution has the potential to be one
+    // of the fastest implementations, something even better
+    // than the shaders. Why? because even without more
+    // optimization, this solution gets around 600 points
+    // before an fps drop, and its basically an O(n^2) algorithm
+    // at this point, but i believe it can go kinda close to
+    // an O(n*c) algorithm.
+    //
+    // if you first check the points that are closest to the checking point,
+    // you will remove massive chucks of the polygon,
+    // and after those close points, no other point will have
+    // an effect on the resulting polygon.
+    //
+    // also, a fast way to check if a point will effect the polygon,
+    // (without getting the perpendicular line), is to check the distance
+    // of the point vs the point on the polygon that is furthest away
+    // from the point. if the distance to the checking point is > 2x the distance
+    // the the furthest point on the polygon, it can be safely rejected.
+    //
+    // so a fast algorithm would sort the points by distance, and then
+    // when this distance is to large, reject the rest of the points.
+    //
+    // when observing the voronoi diagram, most sections have 3-5 edges,
+    // so at most this fast algorithm would only check ~10 points before
+    // all its final edges have been formed, and all points would only check ~10
+    // of its neighbors, in the avarage case.
+    //
+    // NOTE: real sorting would be extreally slow, (it would make the algorithm
+    // O(n^2 * ln(n)), because every point needs to sort its neighbors.)
+    // so the thought is to first sort the points into a spacial array, and then
+    // for every point, check its neighbors with a progressively larger search,
+    // until you can be sure no closer points exist.
+    //
+    // (the above algorithm is still O(n^2) in the worst case, but the average
+    // case is O(n*c))
+
+
+
     for (size_t point_index = 0; point_index < num_points; point_index++) {
         // 1. Get a point.
         Vector2 point = points[point_index];
@@ -200,56 +239,37 @@ void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t
             Vector2 other_point = points[other_point_index];
 
             // 4. Find the mid line parallel to those point
-            Vector2 perpendicular_points[2] = {0}; // TODO dont init
-            // Line perpendicular;
+
+            // the points in here form a perpendicular line.
+            Vector2 perpendicular_points[2];
             {
                 Vector2 p1 = point;
                 Vector2 p2 = other_point;
+
+                // mid point
                 // m = (p1 + p2) / 2
                 Vector2 m = {(p1.x + p2.x) / 2, (p1.y + p2.y) / 2};
 
+                // direction vector
                 // v = p2 - p1
                 Vector2 v = Vector2Subtract(p2, p1);
 
-                // v_1 = (-v.y, v.x); // rot90
+                // rotated 90 direction vector
+                // v1 = (-v.y, v.x)
                 Vector2 v_1 = {-v.y, v.x};
 
-                // m_1 = m + v1; // two points form a line.
+                // add to the mid point
+                // m1 = m + v1
                 Vector2 m_1 = Vector2Add(m, v_1);
 
-                // perpendicular = two_points_to_line(m, m_1);
                 perpendicular_points[0] = m;
                 perpendicular_points[1] = m_1;
             }
 
-            // { // draw perpendicular line.
-            //     if (perpendicular.a == 0) {
-            //         // straight left and right
-            //         float y = line_y_given_x(perpendicular, 0);
-            //         DrawLineEx((Vector2){0, y}, (Vector2){width, y}, 10, BLACK);
-
-            //     } else if (perpendicular.b == 0) {
-            //         // straight up and down.
-            //         float x = line_x_given_y(perpendicular, 0);
-            //         DrawLine(x, 0, x, height, BLACK);
-            //     } else {
-            //         // general case
-
-            //         float x1 = 0;
-            //         float y1 = line_y_given_x(perpendicular, x1);
-
-            //         float x2 = width;
-            //         float y2 = line_y_given_x(perpendicular, x2);
-
-            //         DrawLine(x1, y1, x2, y2, BLACK);
-            //     }
-            // }
-
 
             // 5. Cut the polygon and keep the side that is close to the original point
-
-            Vector2 intersection_points[2] = {0};
-            size_t intersection_points_i[2] = {0};
+            Vector2 intersection_points[2];
+            size_t intersection_points_i[2];
             size_t intersection_points_count = 0;
 
             // loop over all edges
@@ -257,27 +277,19 @@ void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t
                 Vector2 p1 = polygon.items[i];
                 Vector2 p2 = polygon.items[(i+1)%polygon.count];
 
-                // line points
-                // TODO we actually dont need the cannon line arguments?
-                // TODO also this might / 0
-                // Vector2 p3 = {0, line_y_given_x(perpendicular, 0)};
-                // Vector2 p4 = {1, line_y_given_x(perpendicular, 1)};
+                // perpendicular points.
                 Vector2 p3 = perpendicular_points[0];
                 Vector2 p4 = perpendicular_points[1];
 
                 // get intersection
                 Vector2 intersect = line_line_intersection(p1, p2, p3, p4);
 
-                // check if it intersects the actual points.
-                bool intersects_with_line = intersection_point_intersects(p1, p2, intersect);
+                // if the line segment intersects with the intersect point, add it to the intersection array.
+                if (intersection_point_intersects(p1, p2, intersect)) {
 
-                if (intersects_with_line) {
-
-                    // assert(intersection_points_count < 2);
                     if (intersection_points_count == 2) {
                         // TODO debug this
                         // printf("WTF %zu\n", intersection_points_count);
-                        // int k = 1234;
                         continue;
                     }
                     intersection_points[intersection_points_count] = intersect;
@@ -286,13 +298,16 @@ void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t
                 }
             }
 
-            // assert(intersection_points_count == 0 || intersection_points_count == 2);
             if (!(intersection_points_count == 0 || intersection_points_count == 2)) {
                 // TODO debug this
                 // printf("intersection_points_count: %zu\n", intersection_points_count);
-                // int k = 123;
             }
 
+            // check if the line intersected the polygon.
+            // this should either be 0 (for when the line missed)
+            // or 2 (where it entered and exited)
+            //
+            // (however this is somewhat broken, possibly because of float precision?)
             if (intersection_points_count == 2) {
                 // cut the polygon into 2
 
@@ -303,27 +318,30 @@ void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t
                 // index that loops over the points in the polygon
                 size_t index = 0;
 
-                assert(intersection_points_i[0] < polygon.count);
-                assert(intersection_points_i[1] < polygon.count);
-
+                // add points to the first polygon until we get to the first intersection point
                 while (index != intersection_points_i[0]) {
                     da_append(&tmp_poly1, polygon.items[index]);
                     index++;
                 }
+                // add the start of the intersected line and the first intersection point.
                 da_append(&tmp_poly1, polygon.items[index]);
                 da_append(&tmp_poly1, intersection_points[0]);
 
+                // second polygon starts from here with the first intersection point
                 da_append(&tmp_poly2, intersection_points[0]);
+                // loop unil the next intersect
                 index++;
                 while (index != intersection_points_i[1]) {
                     da_append(&tmp_poly2, polygon.items[index]);
                     index++;
                 }
-
+                // same as before and the point and the second intersect
                 da_append(&tmp_poly2, polygon.items[index]);
                 da_append(&tmp_poly2, intersection_points[1]);
 
+                // and add the second intersection the the first polygon
                 da_append(&tmp_poly1, intersection_points[1]);
+                // finnaly add the rest to the first polygon
                 index++;
                 while (index < polygon.count) {
                     da_append(&tmp_poly1, polygon.items[index]);
@@ -348,7 +366,7 @@ void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t
         }
 
         // 7. Convert the resulting convex polygon into triangles and draw them (maybe the bounding lines as well.)
-        draw_polygon(polygon, colors[point_index], target.texture.height);
+        draw_polygon(polygon, colors[point_index], height);
     }
 
     EndTextureMode();
