@@ -63,7 +63,7 @@ build/voronoi_with_math.o: src/voronoi.h src/voronoi_with_math.c src/common.h   
 	$(CC) $(CFLAGS) $(DEFINES) -c -o build/voronoi_with_math.o src/voronoi_with_math.c
 
 
-src/common.h: src/profiler.h
+src/common.h: src/profiler.h src/dynamic_array.h src/ints.h
 
 
 build:

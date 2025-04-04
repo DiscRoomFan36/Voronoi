@@ -13,7 +13,7 @@ typedef unsigned int ShaderBufferId;
 Shader shader;
 RenderTexture2D small_texture;
 
-size_t buffer_cap;
+u64 buffer_cap;
 
 ShaderBufferId points_buffer_id;
 ShaderBufferId color_buffer_id;

@@ -66,37 +66,16 @@ float randf(void) {
     return (float) rand() / (float) RAND_MAX;
 }
 
-
-#define da_append(da, item)                                                                                \
-    do {                                                                                                   \
-        if ((da)->count >= (da)->capacity) {                                                               \
-            (da)->capacity = (da)->capacity == 0 ? 32 : (da)->capacity*2;                                  \
-            (da)->items = (typeof((da)->items)) realloc((da)->items, (da)->capacity*sizeof(*(da)->items)); \
-            assert((da)->items != NULL && "Buy More RAM lol");                                             \
-        }                                                                                                  \
-                                                                                                           \
-        (da)->items[(da)->count++] = (item);                                                               \
-    } while (0)
-
-#define da_free(da)                         \
-    do {                                    \
-        if ((da)->items) free((da)->items); \
-        (da)->items    = 0;                 \
-        (da)->count    = 0;                 \
-        (da)->capacity = 0;                 \
-    } while (0)
-
-
 typedef struct  {
     Vector2 *items;
-    size_t count;
-    size_t capacity;
+    u64 count;
+    u64 capacity;
 } Vector2_Array;
 
 typedef struct Color_Array {
     Color *items;
-    size_t count;
-    size_t capacity;
+    u64 count;
+    u64 capacity;
 } Color_Array;
 
 
@@ -133,7 +112,7 @@ int main(int argc, char const **argv) {
         return 1;
     }
 
-    size_t num_points = 10;
+    u64 num_points = 10;
     if (argc == 2) num_points = atol(argv[1]);
 
     srand(time(0));
@@ -144,7 +123,7 @@ int main(int argc, char const **argv) {
 
     init_voronoi();
 
-    for (size_t i = 0; i < num_points; i++) add_new_point();
+    for (u64 i = 0; i < num_points; i++) add_new_point();
 
     bool paused = false;
     bool reset_profiler = false;
@@ -240,7 +219,7 @@ int main(int argc, char const **argv) {
 
         PROFILER_ZONE("draw the points");
         if (draw_points) {
-            for (size_t i = 0; i < num_points; i++) {
+            for (u64 i = 0; i < num_points; i++) {
                 DrawCircleV(points_pos.items[i], 10, BLUE);
                 DrawCircleV(points_pos.items[i], 7, points_colors.items[i]);
             }

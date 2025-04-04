@@ -7,7 +7,7 @@
 #include "common.h"
 
 static Color *pixel_buf = 0;
-static size_t buf_capacity = 0;
+static u64 buf_capacity = 0;
 
 float dist_sqr(float x1, float y1, float x2, float y2) {
     return (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
@@ -30,17 +30,17 @@ bool finished;
 
 #define THREAD_CHUNK_SIZE 512
 pthread_mutex_t counter_lock = PTHREAD_MUTEX_INITIALIZER;
-size_t counter;
+u64 counter;
 
 // these can be seen by the threads
-size_t thread_width;
-size_t thread_height;
+u64 thread_width;
+u64 thread_height;
 Vector2 *thread_points;
 Color *thread_colors;
-size_t thread_num_points;
+u64 thread_num_points;
 
 void *thread_function(void *args) {
-    size_t id = (size_t) args;
+    u64 id = (u64) args;
     (void) id;
 
     while (1) {
@@ -49,7 +49,7 @@ void *thread_function(void *args) {
 
         // grab a chunk of the work, and do it.
         while (1) {
-            size_t work_to_do;
+            u64 work_to_do;
             pthread_mutex_lock(&counter_lock);
 
             if (counter < thread_width * thread_height) {
@@ -64,16 +64,16 @@ void *thread_function(void *args) {
 
             pthread_mutex_unlock(&counter_lock);
 
-            for (size_t i = work_to_do; i < work_to_do + THREAD_CHUNK_SIZE; i++) {
+            for (u64 i = work_to_do; i < work_to_do + THREAD_CHUNK_SIZE; i++) {
                 if (i >= thread_width * thread_height) break;
 
                 float x = (float) (i % thread_width);
                 float y = (float) (i / thread_width);
 
                 // find the closest point
-                size_t close_index = 0;
+                u64 close_index = 0;
                 float d1 = dist_sqr(thread_points[0].x, thread_points[0].y, x, y);
-                for (size_t k = 1; k < thread_num_points; k++) {
+                for (u64 k = 1; k < thread_num_points; k++) {
                     float d2 = dist_sqr(thread_points[k].x, thread_points[k].y, x, y);
                     if (d2 < d1) {
                         d1 = d2;
@@ -109,7 +109,7 @@ void init_voronoi(void) {
     finished = false;
 
     // start the threads
-    for (size_t i = 0; i < NUM_THREADS; i++) {
+    for (u64 i = 0; i < NUM_THREADS; i++) {
         int res = pthread_create(&thread_ids[i], NULL, thread_function, (void *) i);
         if (res) {
             fprintf(stderr, "ERROR: thread could not be created\n");
@@ -128,7 +128,7 @@ void finish_voronoi(void) {
     pthread_barrier_wait(&start_barrier);
 
     // finish the treads
-    for (size_t i = 0; i < NUM_THREADS; i++) {
+    for (u64 i = 0; i < NUM_THREADS; i++) {
         int ret = pthread_join(thread_ids[i], NULL);
         if (ret) {
             fprintf(stderr, "ERROR: on id %zu when closeing\n", i);
@@ -141,8 +141,8 @@ void finish_voronoi(void) {
 
 
 void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t num_points) {
-    size_t width  = target.texture.width;
-    size_t height = target.texture.height;
+    u64 width  = target.texture.width;
+    u64 height = target.texture.height;
 
     if (buf_capacity < width * height) {
         buf_capacity = width * height;
@@ -172,10 +172,10 @@ void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t
     PROFILER_ZONE("draw into texture");
     BeginTextureMode(target);
 
-    for (size_t j = 0; j < height; j++) {
-        size_t i = 0;
+    for (u64 j = 0; j < height; j++) {
+        u64 i = 0;
         while (i < width) {
-            size_t low_i = i;
+            u64 low_i = i;
             Color this_color = pixel_buf[j*width + i];
             for (; i < width; i++) {
                 if (!ColorIsEqual(this_color, pixel_buf[j*width + i])) break;

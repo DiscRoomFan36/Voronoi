@@ -8,25 +8,6 @@
 
 #include "common.h"
 
-#define da_append(da, item)                                                                                \
-    do {                                                                                                   \
-        if ((da)->count >= (da)->capacity) {                                                               \
-            (da)->capacity = (da)->capacity == 0 ? 32 : (da)->capacity*2;                                  \
-            (da)->items = (typeof((da)->items)) realloc((da)->items, (da)->capacity*sizeof(*(da)->items)); \
-            assert((da)->items != NULL && "Buy More RAM lol");                                             \
-        }                                                                                                  \
-                                                                                                           \
-        (da)->items[(da)->count++] = (item);                                                               \
-    } while (0)
-
-#define da_free(da)                         \
-    do {                                    \
-        if ((da)->items) free((da)->items); \
-        (da)->items    = 0;                 \
-        (da)->count    = 0;                 \
-        (da)->capacity = 0;                 \
-    } while (0)
-
 
 #define SWAP(a, b) do {typeof(a) tmp = a; a = b; b = tmp;} while(0)
 
@@ -39,8 +20,8 @@ typedef struct DoubleVector2 {
 typedef struct Polygon {
     // the points of the polygon
     DoubleVector2 *items;
-    size_t count;
-    size_t capacity;
+    u64 count;
+    u64 capacity;
 } Polygon;
 
 #include <stdio.h>
@@ -48,7 +29,7 @@ typedef struct Polygon {
 // draw a convex polygon, with points in clockwise order
 // flip height, if not zero, flip vertical
 void draw_polygon(Polygon polygon, Color color, int flip_height) {
-    for (size_t i = 1; i < polygon.count - 1; i++) {
+    for (u64 i = 1; i < polygon.count - 1; i++) {
         Vector2 v1 = {polygon.items[0  ].x, polygon.items[0  ].y};
         Vector2 v2 = {polygon.items[i  ].x, polygon.items[i  ].y};
         Vector2 v3 = {polygon.items[i+1].x, polygon.items[i+1].y};
@@ -237,12 +218,12 @@ void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t
 
     // useing this polygon as a double vector2 array
     points_double.count = 0;
-    for (size_t i = 0; i < num_points; i++) {
+    for (u64 i = 0; i < num_points; i++) {
         da_append(&points_double, ((DoubleVector2){(double)points[i].x, (double)points[i].y}));
     }
 
 
-    for (size_t point_index = 0; point_index < num_points; point_index++) {
+    for (u64 point_index = 0; point_index < num_points; point_index++) {
         // 1. Get a point.
         DoubleVector2 point = points_double.items[point_index];
 
@@ -255,7 +236,7 @@ void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t
 
 
         // 3. For every other point:
-        for (size_t other_point_index = 0; other_point_index < num_points; other_point_index++) {
+        for (u64 other_point_index = 0; other_point_index < num_points; other_point_index++) {
             if (other_point_index == point_index) continue;
 
             DoubleVector2 other_point = points_double.items[other_point_index];
@@ -291,11 +272,11 @@ void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t
 
             // 5. Cut the polygon and keep the side that is close to the original point
             DoubleVector2 intersection_points[2];
-            size_t intersection_points_i[2];
-            size_t intersection_points_count = 0;
+            u64 intersection_points_i[2];
+            u64 intersection_points_count = 0;
 
             // loop over all edges
-            for (size_t i = 0; i < polygon.count; i++) {
+            for (u64 i = 0; i < polygon.count; i++) {
                 DoubleVector2 p1 = polygon.items[i];
                 DoubleVector2 p2 = polygon.items[(i+1)%polygon.count];
 
@@ -338,7 +319,7 @@ void draw_voronoi(RenderTexture2D target, Vector2 *points, Color *colors, size_t
                 tmp_poly2.count = 0;
 
                 // index that loops over the points in the polygon
-                size_t index = 0;
+                u64 index = 0;
 
                 // add points to the first polygon until we get to the first intersection point
                 while (index != intersection_points_i[0]) {
