@@ -6,6 +6,7 @@
 
 #include "raymath.h"
 
+#include "common.h"
 
 #define da_append(da, item)                                                                                \
     do {                                                                                                   \

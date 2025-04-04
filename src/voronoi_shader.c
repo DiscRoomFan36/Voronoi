@@ -3,7 +3,7 @@
 
 #include "voronoi.h"
 
-#include "profiler.h"
+#include "common.h"
 
 
 Shader shader;

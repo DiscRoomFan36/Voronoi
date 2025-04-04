@@ -4,7 +4,7 @@
 
 #include "voronoi.h"
 
-#include "profiler.h"
+#include "common.h"
 
 static Color *pixel_buf = 0;
 static size_t buf_capacity = 0;

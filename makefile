@@ -39,7 +39,7 @@ build/bin/main_with_math: build/main.o build/voronoi_with_math.o                
 #                  The Main File
 # ---------------------------------------------------
 
-build/main.o: src/main.c src/voronoi.h src/profiler.h    | build
+build/main.o: src/main.c src/voronoi.h src/common.h src/profiler.h    | build
 	$(CC) $(CFLAGS) $(DEFINES) -c -o build/main.o src/main.c
 
 
@@ -47,21 +47,23 @@ build/main.o: src/main.c src/voronoi.h src/profiler.h    | build
 #             Different Voronoi Backends
 # ---------------------------------------------------
 
-build/voronoi_simple.o: src/voronoi.h src/voronoi_simple.c src/profiler.h                                     | build
+build/voronoi_simple.o: src/voronoi.h src/voronoi_simple.c src/common.h                                     | build
 	$(CC) $(CFLAGS) $(DEFINES) -c -o build/voronoi_simple.o src/voronoi_simple.c
 
-build/voronoi_simple_threaded.o: src/voronoi.h src/voronoi_simple_threaded.c src/profiler.h                   | build
+build/voronoi_simple_threaded.o: src/voronoi.h src/voronoi_simple_threaded.c src/common.h                   | build
 	$(CC) $(CFLAGS) $(DEFINES) -c -o build/voronoi_simple_threaded.o src/voronoi_simple_threaded.c
 
-build/voronoi_shader.o: src/voronoi.h src/voronoi_shader.c src/profiler.h                                     | build
+build/voronoi_shader.o: src/voronoi.h src/voronoi_shader.c src/common.h                                     | build
 	$(CC) $(CFLAGS) $(DEFINES) -c -o build/voronoi_shader.o src/voronoi_shader.c
 
-build/voronoi_shader_buffer.o: src/voronoi.h src/voronoi_shader_buffer.c src/profiler.h                       | build
+build/voronoi_shader_buffer.o: src/voronoi.h src/voronoi_shader_buffer.c src/common.h                       | build
 	$(CC) $(CFLAGS) $(DEFINES) -c -o build/voronoi_shader_buffer.o src/voronoi_shader_buffer.c
 
-build/voronoi_with_math.o: src/voronoi.h src/voronoi_with_math.c                                              | build
+build/voronoi_with_math.o: src/voronoi.h src/voronoi_with_math.c src/common.h                               | build
 	$(CC) $(CFLAGS) $(DEFINES) -c -o build/voronoi_with_math.o src/voronoi_with_math.c
 
+
+src/common.h: src/profiler.h
 
 
 build:

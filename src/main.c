@@ -4,6 +4,8 @@
 #include "raylib.h"
 #include "raymath.h"
 
+#include "common.h"
+
 #define PROFILER_IMPLEMENTATION
 #include "profiler.h"
 
